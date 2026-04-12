@@ -1,0 +1,7 @@
+<menu>
+    <Interfaces>
+        <Diagnostics>
+            <RealtekRe VisibleName="Realtek RE" url="/ui/realtekre"/>
+        </Diagnostics>
+    </Interfaces>
+</menu>

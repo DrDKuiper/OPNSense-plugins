@@ -1,0 +1,44 @@
+<model>
+    <mount>//OPNsense/RealtekRe</mount>
+    <version>1.0.0</version>
+    <description>Realtek vendor driver tuning for OPNsense</description>
+    <items>
+        <general>
+            <Enabled type="BooleanField">
+                <Default>1</Default>
+                <Required>Y</Required>
+            </Enabled>
+            <IntrFilter type="BooleanField">
+                <Default>0</Default>
+            </IntrFilter>
+            <MsiDisable type="BooleanField">
+                <Default>0</Default>
+            </MsiDisable>
+            <MsixDisable type="BooleanField">
+                <Default>0</Default>
+            </MsixDisable>
+            <PreferIomap type="BooleanField">
+                <Default>0</Default>
+            </PreferIomap>
+            <MaxRxMbufSize type="IntegerField">
+                <MinimumValue>2048</MinimumValue>
+                <Required>N</Required>
+            </MaxRxMbufSize>
+            <InterfaceUnit type="IntegerField">
+                <MinimumValue>0</MinimumValue>
+                <Required>N</Required>
+            </InterfaceUnit>
+            <IntRxMod type="IntegerField">
+                <MinimumValue>0</MinimumValue>
+                <MaximumValue>65</MaximumValue>
+                <Required>N</Required>
+            </IntRxMod>
+            <S5Wol type="BooleanField">
+                <Default>0</Default>
+            </S5Wol>
+            <S0MagicPacket type="BooleanField">
+                <Default>0</Default>
+            </S0MagicPacket>
+        </general>
+    </items>
+</model>

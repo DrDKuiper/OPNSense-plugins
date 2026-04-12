@@ -1,0 +1,9 @@
+<acl>
+    <page-user-realtekre>
+        <name>Interfaces: Diagnostics: Realtek RE</name>
+        <patterns>
+            <pattern>ui/realtekre/*</pattern>
+            <pattern>api/realtekre/*</pattern>
+        </patterns>
+    </page-user-realtekre>
+</acl>

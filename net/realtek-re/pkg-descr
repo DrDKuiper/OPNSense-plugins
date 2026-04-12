@@ -4,4 +4,18 @@ issues with it (eg. watchdog timeouts), or your card is not supported.
 
 Please note this driver requires a system reboot to activate.
 
-WWW: https://www.realtek.com/en/component/zoo/category/network-interface-controllers-10-100-1000m-gigabit-ethernet-pci-express-software
+For OPNsense tuning, keep the plugin defaults unchanged and add optional
+loader tunables in System: Settings: Tunables only when troubleshooting
+or benchmarking specific hardware:
+
+- hw.re.intr_filter=1 can reduce interrupt overhead on MSI/MSI-X capable
+  hardware.
+- hw.re.msi_disable=1 or hw.re.msix_disable=1 can improve stability on
+  systems that show interrupt-related issues.
+- dev.re.N.int_rx_mod controls receive interrupt moderation. Lower values
+  reduce latency, higher values can reduce CPU overhead.
+
+These tunables are hardware-dependent and should not be enabled globally
+without verification.
+
+WWW: <https://www.realtek.com/en/component/zoo/category/network-interface-controllers-10-100-1000m-gigabit-ethernet-pci-express-software>

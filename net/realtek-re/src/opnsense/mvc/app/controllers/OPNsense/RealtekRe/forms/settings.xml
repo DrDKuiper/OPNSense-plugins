@@ -1,0 +1,62 @@
+<form>
+    <field>
+        <id>realtekre.general.Enabled</id>
+        <label>Enable vendor driver</label>
+        <type>checkbox</type>
+        <help>Load the Realtek vendor driver at boot instead of relying on the base kernel driver path.</help>
+    </field>
+    <field>
+        <id>realtekre.general.IntrFilter</id>
+        <label>Enable interrupt filter</label>
+        <type>checkbox</type>
+        <help>Sets hw.re.intr_filter=1. This can reduce interrupt overhead on hardware with MSI or MSI-X support.</help>
+    </field>
+    <field>
+        <id>realtekre.general.MsiDisable</id>
+        <label>Disable MSI</label>
+        <type>checkbox</type>
+        <help>Sets hw.re.msi_disable=1. Use this when the interface is unstable with MSI enabled.</help>
+    </field>
+    <field>
+        <id>realtekre.general.MsixDisable</id>
+        <label>Disable MSI-X</label>
+        <type>checkbox</type>
+        <help>Sets hw.re.msix_disable=1. Use this when the interface is unstable with MSI-X enabled.</help>
+    </field>
+    <field>
+        <id>realtekre.general.PreferIomap</id>
+        <label>Prefer I/O mapping</label>
+        <type>checkbox</type>
+        <help>Sets hw.re.prefer_iomap=1. Keep disabled unless your hardware shows mapping-related issues.</help>
+    </field>
+    <field>
+        <id>realtekre.general.MaxRxMbufSize</id>
+        <label>Maximum RX mbuf size</label>
+        <type>text</type>
+        <help>Sets hw.re.max_rx_mbuf_sz. Use 2048 when you do not need jumbo frames and want to reduce the risk of hangs on fragmented memory.</help>
+    </field>
+    <field>
+        <id>realtekre.general.InterfaceUnit</id>
+        <label>Interface unit</label>
+        <type>text</type>
+        <help>Interface number used for per-device tuning, for example 0 for re0 or 1 for re1.</help>
+    </field>
+    <field>
+        <id>realtekre.general.IntRxMod</id>
+        <label>RX interrupt moderation</label>
+        <type>text</type>
+        <help>Sets dev.re.N.int_rx_mod for the selected interface unit. Lower values reduce latency, higher values reduce CPU overhead. Valid range is 0 to 65 microseconds.</help>
+    </field>
+    <field>
+        <id>realtekre.general.S5Wol</id>
+        <label>Enable Wake-on-LAN from S5</label>
+        <type>checkbox</type>
+        <help>Sets hw.re.s5wol=1 for systems that need Wake-on-LAN support from soft-off state.</help>
+    </field>
+    <field>
+        <id>realtekre.general.S0MagicPacket</id>
+        <label>Enable S0 magic packet support</label>
+        <type>checkbox</type>
+        <help>Sets hw.re.s0_magic_packet=1 for hardware that requires explicit magic packet handling.</help>
+    </field>
+</form>
