@@ -198,7 +198,8 @@ class ServiceController extends ApiControllerBase
             $lldpItems = $this->parseLldp($backend->configdRun('topologymap lldp'));
         }
 
-        $maxNodes = (int)$settings->maxNodes;
+        // Model fields are objects; cast via string first to preserve configured numeric value.
+        $maxNodes = (int)((string)$settings->maxNodes);
         if ($maxNodes < 1) {
             $maxNodes = 500;
         }
