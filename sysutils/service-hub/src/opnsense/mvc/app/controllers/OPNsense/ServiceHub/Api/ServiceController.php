@@ -3,6 +3,7 @@
 namespace OPNsense\ServiceHub\Api;
 
 use OPNsense\Base\ApiControllerBase;
+use OPNsense\Core\Backend;
 use OPNsense\Core\Config;
 use OPNsense\ServiceHub\ServiceHub;
 
@@ -129,5 +130,72 @@ class ServiceController extends ApiControllerBase
         Config::getInstance()->save();
 
         return ['result' => 'saved'];
+    }
+
+    /**
+     * Return whether the "collapse Services menu" overlay theme is active.
+     */
+    public function getHideStatusAction()
+    {
+        $cfg          = Config::getInstance()->object();
+        $currentTheme = trim((string)($cfg->system->theme ?? 'opnsense'));
+        return [
+            'hideEnabled'  => ($currentTheme === 'servicehub'),
+            'currentTheme' => $currentTheme,
+        ];
+    }
+
+    /**
+     * Activate the servicehub theme overlay (hides other Services menu items).
+     */
+    public function enableHideAction()
+    {
+        if (!$this->request->isPost()) {
+            return ['result' => 'failed', 'message' => 'POST required'];
+        }
+
+        $cfg          = Config::getInstance();
+        $conf         = $cfg->object();
+        $currentTheme = trim((string)($conf->system->theme ?? 'opnsense'));
+
+        // Persist the previous theme so we can restore it later
+        if ($currentTheme !== 'servicehub') {
+            $model = new ServiceHub();
+            $model->hub->previousTheme = $currentTheme;
+            $model->serializeToConfig();
+        }
+
+        $conf->system->theme = 'servicehub';
+        $cfg->save();
+        (new Backend())->configdRun('webgui reload');
+
+        return ['result' => 'saved'];
+    }
+
+    /**
+     * Restore the previous theme, removing the Services menu overlay.
+     */
+    public function disableHideAction()
+    {
+        if (!$this->request->isPost()) {
+            return ['result' => 'failed', 'message' => 'POST required'];
+        }
+
+        $model        = new ServiceHub();
+        $prevTheme    = trim((string)$model->hub->previousTheme);
+        if ($prevTheme === '' || $prevTheme === 'servicehub') {
+            $prevTheme = 'opnsense';
+        }
+
+        $cfg  = Config::getInstance();
+        $conf = $cfg->object();
+        $conf->system->theme = $prevTheme;
+
+        $model->hub->previousTheme = '';
+        $model->serializeToConfig();
+        $cfg->save();
+        (new Backend())->configdRun('webgui reload');
+
+        return ['result' => 'saved', 'theme' => $prevTheme];
     }
 }

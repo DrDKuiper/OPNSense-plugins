@@ -1,0 +1,24 @@
+@import url("/ui/themes/opnsense/build/css/main.css");
+
+/*
+ * Services menu collapse overlay for Services Hub plugin.
+ * Applied when the user enables "Collapse Services menu" in Services Hub settings.
+ *
+ * OPNsense renders each navigation section as a collapsible <ul> whose id
+ * matches the lowercase section name, e.g. id="services".
+ * We use that to target only the Services section without touching other sections.
+ */
+
+/* Hide every Services item except the Services Hub itself */
+ul#services > li > a.list-group-item:not([href*="servicehub"]),
+ul#services > li:not([class*="hub"]) > a.list-group-item:not([href*="servicehub"]),
+#services a.list-group-item:not([href*="servicehub"]) {
+    display: none !important;
+}
+
+/* Always keep Services Hub link visible and slightly emphasised */
+#services a.list-group-item[href*="servicehub"],
+ul#services a.list-group-item[href*="servicehub"] {
+    display: block !important;
+    font-weight: 600;
+}

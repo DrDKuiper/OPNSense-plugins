@@ -9,7 +9,8 @@ $(document).ready(function () {
         assignments: {},  // itemId -> categoryName
         categories:  ['VPN & Tunneling', 'Network & Proxy', 'Security',
                       'Monitoring', 'DNS & DHCP', 'Mail', 'Backup', 'System', 'Other'],
-        editMode:    false
+        editMode:    false,
+        hideEnabled: false   // true when servicehub theme overlay is active
     };
 
     // Keyword → default category mapping (matches against plugin + name + url + section)
@@ -202,11 +203,21 @@ $(document).ready(function () {
         $c.append($row);
 
         // Toolbar
-        $('#hubToolbar').html(
-            '<button id="hubEditBtn" class="btn btn-default btn-sm">' +
-            '<i class="fa fa-pencil" style="margin-right:4px;"></i>Customize Categories' +
-            '</button>'
-        );
+        var $hideBtn = hub.hideEnabled
+            ? $('<button id="hubToggleHideBtn" class="btn btn-warning btn-sm" style="margin-right:6px;" ' +
+                'title="Services menu is collapsed — click to restore all items"></button>')
+                .append($('<i class="fa fa-eye-slash" style="margin-right:4px;"></i>'),
+                        document.createTextNode('Hub only  \u25CF'))
+            : $('<button id="hubToggleHideBtn" class="btn btn-default btn-sm" style="margin-right:6px;" ' +
+                'title="Hide all other Services menu items, keeping only Services Hub"></button>')
+                .append($('<i class="fa fa-filter" style="margin-right:4px;"></i>'),
+                        document.createTextNode('Collapse Services menu'));
+
+        var $editBtn = $('<button id="hubEditBtn" class="btn btn-default btn-sm"></button>')
+            .append($('<i class="fa fa-pencil" style="margin-right:4px;"></i>'),
+                    document.createTextNode('Customize Categories'));
+
+        $('#hubToolbar').empty().append($hideBtn, $editBtn);
     }
 
     // ========================================================
@@ -319,14 +330,22 @@ $(document).ready(function () {
         $c.append($tableBox);
 
         // Toolbar
-        $('#hubToolbar').html(
-            '<button id="hubSaveBtn" class="btn btn-primary btn-sm" style="margin-right:4px;">' +
-            '<i class="fa fa-floppy-o" style="margin-right:4px;"></i>Save' +
-            '</button>' +
-            '<button id="hubCancelBtn" class="btn btn-default btn-sm">' +
-            'Cancel' +
-            '</button>'
-        );
+        var $hideBtn2 = hub.hideEnabled
+            ? $('<button id="hubToggleHideBtn" class="btn btn-warning btn-sm" style="margin-right:6px;" ' +
+                'title="Services menu is collapsed — click to restore all items"></button>')
+                .append($('<i class="fa fa-eye-slash" style="margin-right:4px;"></i>'),
+                        document.createTextNode('Hub only  \u25CF'))
+            : $('<button id="hubToggleHideBtn" class="btn btn-default btn-sm" style="margin-right:6px;" ' +
+                'title="Hide all other Services menu items, keeping only Services Hub"></button>')
+                .append($('<i class="fa fa-filter" style="margin-right:4px;"></i>'),
+                        document.createTextNode('Collapse Services menu'));
+
+        var $saveBtn = $('<button id="hubSaveBtn" class="btn btn-primary btn-sm" style="margin-right:4px;"></button>')
+            .append($('<i class="fa fa-floppy-o" style="margin-right:4px;"></i>'), document.createTextNode('Save'));
+        var $cancelBtn = $('<button id="hubCancelBtn" class="btn btn-default btn-sm"></button>')
+            .text('Cancel');
+
+        $('#hubToolbar').empty().append($hideBtn2, $saveBtn, $cancelBtn);
     }
 
     // ========================================================
@@ -381,6 +400,41 @@ $(document).ready(function () {
         });
     });
 
+    // ---- Hide/show Services menu toggle ----
+    $(document).on('click', '#hubToggleHideBtn', function () {
+        var enable = !hub.hideEnabled;
+        var $btn = $(this).prop('disabled', true);
+        $btn.empty().append($('<i class="fa fa-spinner fa-spin"></i>'),
+                            document.createTextNode(' Applying\u2026'));
+
+        var url = enable ? '/api/servicehub/service/enableHide'
+                        : '/api/servicehub/service/disableHide';
+
+        ajaxCall(url, {}, function (resp) {
+            if (resp && resp.result === 'saved') {
+                hub.hideEnabled = enable;
+                renderHub();
+                // Theme switch requires a full page reload to take effect
+                $('#hubContent').prepend(
+                    $('<div class="alert alert-info" style="margin-bottom:12px;"></div>')
+                        .append(
+                            $('<i class="fa fa-refresh" style="margin-right:6px;"></i>'),
+                            document.createTextNode(
+                                enable
+                                ? 'Services menu collapsed. '
+                                : 'Services menu restored. '
+                            ),
+                            $('<a href="#" onclick="window.location.reload();return false;"></a>')
+                                .text('Reload page to apply.')
+                        )
+                );
+            } else {
+                $btn.prop('disabled', false);
+                renderHub();
+            }
+        });
+    });
+
     // ========================================================
     // Initial data load
     // ========================================================
@@ -390,6 +444,16 @@ $(document).ready(function () {
         '</div>'
     );
 
+    // Load settings, hide-status, and menu items in parallel; render when all three complete
+    var initData = { settings: null, hideStatus: null, items: null };
+    function tryRenderAfterLoad() {
+        if (initData.settings === null || initData.hideStatus === null || initData.items === null) {
+            return;
+        }
+        hub.hideEnabled = !!(initData.hideStatus && initData.hideStatus.hideEnabled);
+        renderHub();
+    }
+
     $.ajax('/api/servicehub/service/getSettings', {
         type: 'GET', cache: false,
         success: function (cfg) {
@@ -398,24 +462,35 @@ $(document).ready(function () {
                 var cats = JSON.parse(cfg.categories || '[]');
                 if (cats.length) hub.categories = cats;
             } catch (e) {}
-
-            $.ajax('/api/servicehub/service/getMenuItems', {
-                type: 'GET', cache: false,
-                success: function (resp) {
-                    hub.items = resp.items || [];
-                    renderHub();
-                },
-                error: function () {
-                    $('#hubContent').html(
-                        '<div class="alert alert-danger">Failed to load plugin list from API.</div>'
-                    );
-                }
-            });
+            initData.settings = cfg;
+            tryRenderAfterLoad();
         },
         error: function () {
-            $('#hubContent').html(
-                '<div class="alert alert-danger">Failed to load settings from API.</div>'
-            );
+            $('#hubContent').html('<div class="alert alert-danger">Failed to load settings from API.</div>');
+        }
+    });
+
+    $.ajax('/api/servicehub/service/getHideStatus', {
+        type: 'GET', cache: false,
+        success: function (status) {
+            initData.hideStatus = status || {};
+            tryRenderAfterLoad();
+        },
+        error: function () {
+            initData.hideStatus = {};
+            tryRenderAfterLoad();
+        }
+    });
+
+    $.ajax('/api/servicehub/service/getMenuItems', {
+        type: 'GET', cache: false,
+        success: function (resp) {
+            hub.items = resp.items || [];
+            initData.items = hub.items;
+            tryRenderAfterLoad();
+        },
+        error: function () {
+            $('#hubContent').html('<div class="alert alert-danger">Failed to load plugin list from API.</div>');
         }
     });
 });

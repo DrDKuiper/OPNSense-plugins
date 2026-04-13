@@ -15,6 +15,11 @@
                 <Default>["VPN &amp; Tunneling","Network &amp; Proxy","Security","Monitoring","DNS &amp; DHCP","Mail","Backup","System","Other"]</Default>
                 <MaximumLength>4096</MaximumLength>
             </categories>
+            <!-- Theme name saved before hide-menu was activated, used to restore on disable -->
+            <previousTheme type="TextField">
+                <Default>opnsense</Default>
+                <MaximumLength>64</MaximumLength>
+            </previousTheme>
         </hub>
     </items>
 </model>
