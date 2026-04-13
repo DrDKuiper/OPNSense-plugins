@@ -212,11 +212,13 @@ $(document).ready(function () {
         }
 
         var indexById = {};
+        var anchors = {};
         for (var i = 0; i < nodes.length; i++) {
             indexById[nodes[i].id] = i;
+            anchors[nodes[i].id] = {x: nodes[i].x, y: nodes[i].y};
         }
 
-        for (var iter = 0; iter < 70; iter++) {
+        for (var iter = 0; iter < 85; iter++) {
             for (var a = 0; a < nodes.length; a++) {
                 var n1 = nodes[a];
                 if (typeof n1.vx === 'undefined') {
@@ -224,12 +226,18 @@ $(document).ready(function () {
                     n1.vy = 0;
                 }
 
+                if (!n1.fixed) {
+                    // Keep nodes around their initial lanes to avoid collapsing into one cluster.
+                    n1.vx += (anchors[n1.id].x - n1.x) * 0.003;
+                    n1.vy += (anchors[n1.id].y - n1.y) * 0.003;
+                }
+
                 for (var b = a + 1; b < nodes.length; b++) {
                     var n2 = nodes[b];
                     var dx = n2.x - n1.x;
                     var dy = n2.y - n1.y;
                     var dist2 = (dx * dx) + (dy * dy) + 0.01;
-                    var repulse = 4500 / dist2;
+                    var repulse = 9000 / dist2;
 
                     n1.vx -= repulse * dx * 0.001;
                     n1.vy -= repulse * dy * 0.001;
@@ -251,8 +259,8 @@ $(document).ready(function () {
                 var ldx = dst.x - src.x;
                 var ldy = dst.y - src.y;
                 var dist = Math.sqrt((ldx * ldx) + (ldy * ldy)) || 1;
-                var target = 120;
-                var spring = (dist - target) * 0.004;
+                var target = 140;
+                var spring = (dist - target) * 0.0022;
 
                 src.vx += spring * ldx;
                 src.vy += spring * ldy;
@@ -267,10 +275,73 @@ $(document).ready(function () {
                 }
                 n.vx *= 0.84;
                 n.vy *= 0.84;
+                n.vx = Math.max(-7, Math.min(7, n.vx));
+                n.vy = Math.max(-7, Math.min(7, n.vy));
                 n.x += n.vx;
                 n.y += n.vy;
                 n.x = Math.max(24, Math.min(width - 24, n.x));
                 n.y = Math.max(24, Math.min(height - 24, n.y));
+            }
+        }
+    }
+
+    function spreadOverlaps(nodes, width, height) {
+        var groups = {};
+        var key;
+        var i;
+
+        for (i = 0; i < nodes.length; i++) {
+            key = Math.round(nodes[i].x / 8) + ':' + Math.round(nodes[i].y / 8);
+            if (!groups[key]) {
+                groups[key] = [];
+            }
+            groups[key].push(nodes[i]);
+        }
+
+        Object.keys(groups).forEach(function (groupKey) {
+            var g = groups[groupKey];
+            if (g.length < 2) {
+                return;
+            }
+
+            var cx = g[0].x;
+            var cy = g[0].y;
+            var radius = 12;
+            for (var gi = 0; gi < g.length; gi++) {
+                var angle = (Math.PI * 2 * gi) / g.length;
+                g[gi].x = Math.max(24, Math.min(width - 24, cx + Math.cos(angle) * radius));
+                g[gi].y = Math.max(24, Math.min(height - 24, cy + Math.sin(angle) * radius));
+                radius += 4;
+            }
+        });
+
+        // Final collision pass to increase minimum distance between node centers.
+        for (var pass = 0; pass < 2; pass++) {
+            for (var a = 0; a < nodes.length; a++) {
+                for (var b = a + 1; b < nodes.length; b++) {
+                    var n1 = nodes[a];
+                    var n2 = nodes[b];
+                    var dx = n2.x - n1.x;
+                    var dy = n2.y - n1.y;
+                    var dist = Math.sqrt((dx * dx) + (dy * dy)) || 0.001;
+                    var minDist = 20;
+                    if (dist >= minDist) {
+                        continue;
+                    }
+
+                    var push = (minDist - dist) / 2;
+                    var ux = dx / dist;
+                    var uy = dy / dist;
+
+                    if (!n1.fixed) {
+                        n1.x = Math.max(24, Math.min(width - 24, n1.x - (ux * push)));
+                        n1.y = Math.max(24, Math.min(height - 24, n1.y - (uy * push)));
+                    }
+                    if (!n2.fixed) {
+                        n2.x = Math.max(24, Math.min(width - 24, n2.x + (ux * push)));
+                        n2.y = Math.max(24, Math.min(height - 24, n2.y + (uy * push)));
+                    }
+                }
             }
         }
     }
@@ -462,6 +533,7 @@ $(document).ready(function () {
         layoutVertical(neighbors, width - 130, 30, height - 30);
         layoutGrid(others, Math.floor(width * 0.66), width - 45, 40, height - 40);
         runForceLayout(renderNodes, filteredLinks, width, height);
+        spreadOverlaps(renderNodes, width, height);
 
         var selected = graphState.selectedNodeId;
         var adjacency = {};
