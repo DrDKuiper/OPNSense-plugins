@@ -124,10 +124,21 @@ $(document).ready(function () {
             return;
         }
 
-        var step = (maxY - minY) / (nodes.length + 1);
+        var movable = [];
         for (var i = 0; i < nodes.length; i++) {
-            nodes[i].x = x;
-            nodes[i].y = minY + ((i + 1) * step);
+            if (!nodes[i].fixed) {
+                movable.push(nodes[i]);
+            }
+        }
+
+        if (!movable.length) {
+            return;
+        }
+
+        var step = (maxY - minY) / (movable.length + 1);
+        for (var m = 0; m < movable.length; m++) {
+            movable[m].x = x;
+            movable[m].y = minY + ((m + 1) * step);
         }
     }
 
@@ -136,17 +147,33 @@ $(document).ready(function () {
             return;
         }
 
-        var cols = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
-        var rows = Math.ceil(nodes.length / cols);
+        var movable = [];
+        for (var i = 0; i < nodes.length; i++) {
+            if (!nodes[i].fixed) {
+                movable.push(nodes[i]);
+            }
+        }
+
+        if (!movable.length) {
+            return;
+        }
+
+        var cols = Math.max(1, Math.ceil(Math.sqrt(movable.length)));
+        var rows = Math.ceil(movable.length / cols);
         var stepX = (maxX - minX) / (cols + 1);
         var stepY = (maxY - minY) / (rows + 1);
 
-        for (var i = 0; i < nodes.length; i++) {
-            var col = i % cols;
-            var row = Math.floor(i / cols);
-            nodes[i].x = minX + ((col + 1) * stepX);
-            nodes[i].y = minY + ((row + 1) * stepY);
+        for (var m = 0; m < movable.length; m++) {
+            var col = m % cols;
+            var row = Math.floor(m / cols);
+            movable[m].x = minX + ((col + 1) * stepX);
+            movable[m].y = minY + ((row + 1) * stepY);
         }
+    }
+
+    function sanitizeCoordinate(value, fallback) {
+        var num = Number(value);
+        return isFinite(num) ? num : fallback;
     }
 
     function getNodeTypeLabel(type) {
@@ -214,6 +241,10 @@ $(document).ready(function () {
         var indexById = {};
         var anchors = {};
         for (var i = 0; i < nodes.length; i++) {
+            nodes[i].vx = sanitizeCoordinate(nodes[i].vx, 0);
+            nodes[i].vy = sanitizeCoordinate(nodes[i].vy, 0);
+            nodes[i].x = sanitizeCoordinate(nodes[i].x, width / 2);
+            nodes[i].y = sanitizeCoordinate(nodes[i].y, height / 2);
             indexById[nodes[i].id] = i;
             anchors[nodes[i].id] = {x: nodes[i].x, y: nodes[i].y};
         }
@@ -221,10 +252,6 @@ $(document).ready(function () {
         for (var iter = 0; iter < 85; iter++) {
             for (var a = 0; a < nodes.length; a++) {
                 var n1 = nodes[a];
-                if (typeof n1.vx === 'undefined') {
-                    n1.vx = 0;
-                    n1.vy = 0;
-                }
 
                 if (!n1.fixed) {
                     // Keep nodes around their initial lanes to avoid collapsing into one cluster.
@@ -279,6 +306,8 @@ $(document).ready(function () {
                 n.vy = Math.max(-7, Math.min(7, n.vy));
                 n.x += n.vx;
                 n.y += n.vy;
+                n.x = sanitizeCoordinate(n.x, anchors[n.id].x);
+                n.y = sanitizeCoordinate(n.y, anchors[n.id].y);
                 n.x = Math.max(24, Math.min(width - 24, n.x));
                 n.y = Math.max(24, Math.min(height - 24, n.y));
             }
@@ -323,7 +352,12 @@ $(document).ready(function () {
                     var n2 = nodes[b];
                     var dx = n2.x - n1.x;
                     var dy = n2.y - n1.y;
-                    var dist = Math.sqrt((dx * dx) + (dy * dy)) || 0.001;
+                    var dist = Math.sqrt((dx * dx) + (dy * dy));
+                    if (!isFinite(dist) || dist < 0.001) {
+                        dist = 0.001;
+                        dx = 0.001;
+                        dy = 0;
+                    }
                     var minDist = 20;
                     if (dist >= minDist) {
                         continue;
@@ -502,6 +536,7 @@ $(document).ready(function () {
             n.type = n.type || 'unknown';
             n.x = width / 2;
             n.y = height / 2;
+            n.fixed = false;
             renderNodes.push(n);
             nodeMap[n.id] = n;
 
@@ -523,8 +558,8 @@ $(document).ready(function () {
                 continue;
             }
 
-            nodeWithManual.x = Math.max(24, Math.min(width - 24, Number(manualPos.x) || nodeWithManual.x));
-            nodeWithManual.y = Math.max(24, Math.min(height - 24, Number(manualPos.y) || nodeWithManual.y));
+            nodeWithManual.x = Math.max(24, Math.min(width - 24, sanitizeCoordinate(manualPos.x, nodeWithManual.x)));
+            nodeWithManual.y = Math.max(24, Math.min(height - 24, sanitizeCoordinate(manualPos.y, nodeWithManual.y)));
             nodeWithManual.fixed = true;
         }
 
@@ -559,6 +594,8 @@ $(document).ready(function () {
 
         graphState.renderedNodePositions = {};
         for (var rp = 0; rp < renderNodes.length; rp++) {
+            renderNodes[rp].x = sanitizeCoordinate(renderNodes[rp].x, width / 2);
+            renderNodes[rp].y = sanitizeCoordinate(renderNodes[rp].y, height / 2);
             graphState.renderedNodePositions[renderNodes[rp].id] = {
                 x: renderNodes[rp].x,
                 y: renderNodes[rp].y
