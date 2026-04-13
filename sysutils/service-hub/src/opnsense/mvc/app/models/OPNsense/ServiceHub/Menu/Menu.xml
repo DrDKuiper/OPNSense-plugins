@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<menu>
+    <Services>
+        <ServiceHub VisibleName="Services Hub" cssClass="fa fa-th" order="0">
+            <index VisibleName="Overview" url="/ui/servicehub/" isVisible="0"/>
+        </ServiceHub>
+    </Services>
+</menu>

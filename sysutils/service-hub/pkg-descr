@@ -1,0 +1,8 @@
+Adds a Services Hub page that automatically discovers all installed
+OPNsense plugins and displays them in a configurable category grid.
+Eliminates scrolling through a long flat Services menu by grouping
+related plugins (VPN, Security, Monitoring, DNS, Mail, Backup, etc.)
+into collapsible sections. Category assignments are user-configurable
+and saved to the system configuration.
+
+WWW: https://opnsense.org

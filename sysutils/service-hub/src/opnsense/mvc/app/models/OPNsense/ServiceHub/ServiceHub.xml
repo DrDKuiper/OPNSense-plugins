@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<model>
+    <mount>//OPNsense/ServiceHub</mount>
+    <version>1.0.0</version>
+    <description>Services Hub category configuration</description>
+    <items>
+        <hub>
+            <!-- JSON object mapping plugin id -> category name -->
+            <assignments type="TextField">
+                <Default>{}</Default>
+                <MaximumLength>65535</MaximumLength>
+            </assignments>
+            <!-- JSON array of category names in display order -->
+            <categories type="TextField">
+                <Default>["VPN &amp; Tunneling","Network &amp; Proxy","Security","Monitoring","DNS &amp; DHCP","Mail","Backup","System","Other"]</Default>
+                <MaximumLength>4096</MaximumLength>
+            </categories>
+        </hub>
+    </items>
+</model>

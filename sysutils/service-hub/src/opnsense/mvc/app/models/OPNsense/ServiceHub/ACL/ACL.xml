@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<acl>
+    <page-servicehub>
+        <name>Services: Services Hub</name>
+        <description>Allow access to the Services Hub overview</description>
+        <patterns>
+            <pattern>ui/servicehub*</pattern>
+            <pattern>api/servicehub/*</pattern>
+        </patterns>
+    </page-servicehub>
+</acl>
