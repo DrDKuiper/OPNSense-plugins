@@ -5,6 +5,8 @@ $(document).ready(function () {
     var graphState = {
         rawNodes: [],
         rawLinks: [],
+        displayedNodes: [],
+        displayedLinks: [],
         selectedNodeId: null,
         zoom: 1,
         panX: 0,
@@ -119,6 +121,33 @@ $(document).ready(function () {
         $(selector).html(html);
     }
 
+    function buildNodeLabelMap(nodes) {
+        var labels = {};
+        for (var i = 0; i < nodes.length; i++) {
+            var node = nodes[i] || {};
+            if (node.id) {
+                labels[node.id] = node.label || node.id;
+            }
+        }
+        return labels;
+    }
+
+    function formatLinksForTable(links, nodes) {
+        var nodeLabels = buildNodeLabelMap(nodes);
+        var rows = [];
+
+        for (var i = 0; i < links.length; i++) {
+            var currentLink = links[i] || {};
+            rows.push({
+                from: nodeLabels[currentLink.from] || currentLink.from || '',
+                to: nodeLabels[currentLink.to] || currentLink.to || '',
+                type: currentLink.type || ''
+            });
+        }
+
+        return rows;
+    }
+
     function layoutVertical(nodes, x, minY, maxY) {
         if (!nodes.length) {
             return;
@@ -231,6 +260,108 @@ $(document).ready(function () {
         }
 
         return {nodes: visibleNodes, links: visibleLinks};
+    }
+
+    function syncInterfaceSelector(nodes) {
+        var $select = $('#graphInterfaceSelect');
+        if (!$select.length) {
+            return;
+        }
+
+        var current = $select.val() || 'all';
+        var interfaces = [];
+        for (var i = 0; i < nodes.length; i++) {
+            var node = nodes[i] || {};
+            if ((node.type || '') === 'interface') {
+                interfaces.push(node);
+            }
+        }
+
+        interfaces.sort(function (left, right) {
+            return String(left.label || left.id).localeCompare(String(right.label || right.id));
+        });
+
+        var html = '<option value="all">{{ lang._('All interfaces') }}</option>';
+        for (var j = 0; j < interfaces.length; j++) {
+            html += '<option value="' + escapeHtml(interfaces[j].id) + '">' + escapeHtml(interfaces[j].label || interfaces[j].id) + '</option>';
+        }
+        $select.html(html);
+
+        if ($select.find('option[value="' + current.replace(/"/g, '&quot;') + '"]').length) {
+            $select.val(current);
+        } else {
+            $select.val('all');
+        }
+    }
+
+    function getSelectedInterfaceId() {
+        return $('#graphInterfaceSelect').val() || 'all';
+    }
+
+    function buildFocusedTopology(nodes, links) {
+        var selectedInterfaceId = getSelectedInterfaceId();
+        if (selectedInterfaceId === 'all') {
+            return {
+                nodes: nodes.slice(),
+                links: links.slice(),
+                selectedInterfaceId: null,
+                selectedInterfaceLabel: '{{ lang._('All interfaces') }}'
+            };
+        }
+
+        var selectedNode = null;
+        var nodeMap = {};
+        var queue = [selectedInterfaceId];
+        var visited = {};
+        for (var i = 0; i < nodes.length; i++) {
+            nodeMap[nodes[i].id] = nodes[i];
+            if (nodes[i].id === selectedInterfaceId) {
+                selectedNode = nodes[i];
+            }
+        }
+
+        if (!selectedNode) {
+            return {
+                nodes: nodes.slice(),
+                links: links.slice(),
+                selectedInterfaceId: null,
+                selectedInterfaceLabel: '{{ lang._('All interfaces') }}'
+            };
+        }
+
+        visited[selectedInterfaceId] = true;
+        while (queue.length) {
+            var currentId = queue.shift();
+            for (var l = 0; l < links.length; l++) {
+                var currentLink = links[l] || {};
+                var nextId = null;
+                if (currentLink.from === currentId) {
+                    nextId = currentLink.to;
+                } else if (currentLink.to === currentId) {
+                    nextId = currentLink.from;
+                }
+
+                if (nextId && !visited[nextId]) {
+                    visited[nextId] = true;
+                    queue.push(nextId);
+                }
+            }
+        }
+
+        return {
+            nodes: nodes.filter(function (node) { return !!visited[node.id]; }),
+            links: links.filter(function (link) { return !!visited[link.from] && !!visited[link.to]; }),
+            selectedInterfaceId: selectedInterfaceId,
+            selectedInterfaceLabel: selectedNode.label || selectedInterfaceId
+        };
+    }
+
+    function getDisplayedTopology(nodes, links) {
+        var focused = buildFocusedTopology(nodes, links);
+        var filtered = applyFilters(focused.nodes, focused.links);
+        filtered.selectedInterfaceId = focused.selectedInterfaceId;
+        filtered.selectedInterfaceLabel = focused.selectedInterfaceLabel;
+        return filtered;
     }
 
     function runForceLayout(nodes, links, width, height) {
@@ -380,6 +511,55 @@ $(document).ready(function () {
         }
     }
 
+    function layoutFocusedInterface(nodes, links, width, height, selectedInterfaceId) {
+        if (!selectedInterfaceId) {
+            return;
+        }
+
+        var selectedNode = null;
+        var adjacent = [];
+        var others = [];
+        var directlyLinked = {};
+
+        for (var li = 0; li < links.length; li++) {
+            var link = links[li] || {};
+            if (link.from === selectedInterfaceId) {
+                directlyLinked[link.to] = true;
+            }
+            if (link.to === selectedInterfaceId) {
+                directlyLinked[link.from] = true;
+            }
+        }
+
+        for (var i = 0; i < nodes.length; i++) {
+            var node = nodes[i];
+            if (node.id === selectedInterfaceId) {
+                selectedNode = node;
+                continue;
+            }
+
+            if (directlyLinked[node.id]) {
+                adjacent.push(node);
+            } else {
+                others.push(node);
+            }
+        }
+
+        if (selectedNode && !selectedNode.fixed) {
+            selectedNode.x = Math.max(140, Math.floor(width * 0.22));
+            selectedNode.y = Math.floor(height / 2);
+        }
+
+        var movableAdjacent = adjacent.filter(function (node) { return !node.fixed; });
+        for (var ai = 0; ai < movableAdjacent.length; ai++) {
+            var angle = movableAdjacent.length === 1 ? 0 : (-Math.PI / 2) + ((Math.PI * ai) / (movableAdjacent.length - 1));
+            movableAdjacent[ai].x = Math.floor(width * 0.62) + Math.cos(angle) * Math.min(150, Math.floor(width * 0.16));
+            movableAdjacent[ai].y = Math.floor(height / 2) + Math.sin(angle) * Math.min(160, Math.floor(height * 0.34));
+        }
+
+        layoutGrid(others, Math.floor(width * 0.55), width - 40, 45, height - 45);
+    }
+
     function updateViewportTransform() {
         var $stage = $('#tm-stage');
         if (!$stage.length) {
@@ -507,7 +687,7 @@ $(document).ready(function () {
         graphState.rawNodes = Array.isArray(nodes) ? nodes : [];
         graphState.rawLinks = Array.isArray(links) ? links : [];
 
-        var filtered = applyFilters(graphState.rawNodes, graphState.rawLinks);
+        var filtered = getDisplayedTopology(graphState.rawNodes, graphState.rawLinks);
         var filteredNodes = filtered.nodes;
         var filteredLinks = filtered.links;
 
@@ -567,6 +747,7 @@ $(document).ready(function () {
         layoutGrid(hosts, Math.floor(width * 0.34), Math.floor(width * 0.63), 35, height - 35);
         layoutVertical(neighbors, width - 130, 30, height - 30);
         layoutGrid(others, Math.floor(width * 0.66), width - 45, 40, height - 40);
+        layoutFocusedInterface(renderNodes, filteredLinks, width, height, filtered.selectedInterfaceId);
         runForceLayout(renderNodes, filteredLinks, width, height);
         spreadOverlaps(renderNodes, width, height);
 
@@ -650,8 +831,38 @@ $(document).ready(function () {
         svg += '</g>';
         svg += '</svg>';
         $graph.html(svg);
+        graphState.displayedNodes = renderNodes;
+        graphState.displayedLinks = filteredLinks;
+        $('#graphSelectionInfo').text(filtered.selectedInterfaceLabel || '{{ lang._('All interfaces') }}');
         updateViewportTransform();
         bindGraphInteractions();
+        return {
+            nodes: filteredNodes,
+            links: filteredLinks,
+            selectedInterfaceId: filtered.selectedInterfaceId,
+            selectedInterfaceLabel: filtered.selectedInterfaceLabel
+        };
+    }
+
+    function renderCurrentTopologyView() {
+        var view = renderGraph(graphState.rawNodes, graphState.rawLinks) || {nodes: [], links: []};
+
+        renderTable('#nodesTable', view.nodes || [], [
+            {key: 'label', label: '{{ lang._('Node') }}'},
+            {key: 'type', label: '{{ lang._('Type') }}'},
+            {key: 'ip', label: '{{ lang._('IP') }}'},
+            {key: 'mac', label: '{{ lang._('MAC') }}'},
+            {key: 'source', label: '{{ lang._('Source') }}'}
+        ]);
+
+        renderTable('#linksTable', formatLinksForTable(view.links || [], view.nodes || []), [
+            {key: 'from', label: '{{ lang._('From') }}'},
+            {key: 'to', label: '{{ lang._('To') }}'},
+            {key: 'type', label: '{{ lang._('Type') }}'}
+        ]);
+
+        $('#graphVisibleNodes').text((view.nodes || []).length);
+        $('#graphVisibleLinks').text((view.links || []).length);
     }
 
     function loadData() {
@@ -668,62 +879,24 @@ $(document).ready(function () {
 
             var nodes = (data['topology'] && data['topology']['nodes']) ? data['topology']['nodes'] : [];
             var links = (data['topology'] && data['topology']['links']) ? data['topology']['links'] : [];
-            var nodeLabels = {};
-
-            for (var i = 0; i < nodes.length; i++) {
-                var currentNode = nodes[i] || {};
-                if (currentNode.id) {
-                    nodeLabels[currentNode.id] = currentNode.label || currentNode.id;
-                }
-            }
-
-            var linksForTable = [];
-            for (var l = 0; l < links.length; l++) {
-                var currentLink = links[l] || {};
-                linksForTable.push({
-                    from: nodeLabels[currentLink.from] || currentLink.from || '',
-                    to: nodeLabels[currentLink.to] || currentLink.to || '',
-                    type: currentLink.type || ''
-                });
-            }
-
-            renderGraph(nodes, links);
-
-            renderTable('#nodesTable', nodes, [
-                {key: 'label', label: '{{ lang._('Node') }}'},
-                {key: 'type', label: '{{ lang._('Type') }}'},
-                {key: 'ip', label: '{{ lang._('IP') }}'},
-                {key: 'mac', label: '{{ lang._('MAC') }}'},
-                {key: 'source', label: '{{ lang._('Source') }}'}
-            ]);
-
-            renderTable('#linksTable', linksForTable, [
-                {key: 'from', label: '{{ lang._('From') }}'},
-                {key: 'to', label: '{{ lang._('To') }}'},
-                {key: 'type', label: '{{ lang._('Type') }}'}
-            ]);
-
-            $('#graphVisibleNodes').text($('.tm-node').length || 0);
-            $('#graphVisibleLinks').text(filteredLinksCount());
+            syncInterfaceSelector(nodes);
+            graphState.rawNodes = nodes;
+            graphState.rawLinks = links;
+            renderCurrentTopologyView();
         });
-    }
-
-    function filteredLinksCount() {
-        var cnt = $('#topologyGraph line').length;
-        return cnt || 0;
     }
 
     function bindGraphControls() {
         $('#graphFilterInterface,#graphFilterHost,#graphFilterLldp,#graphFilterOther').on('change', function () {
-            renderGraph(graphState.rawNodes, graphState.rawLinks);
-            $('#graphVisibleNodes').text($('.tm-node').length || 0);
-            $('#graphVisibleLinks').text(filteredLinksCount());
+            renderCurrentTopologyView();
         });
 
         $('#graphSearch').on('input', function () {
-            renderGraph(graphState.rawNodes, graphState.rawLinks);
-            $('#graphVisibleNodes').text($('.tm-node').length || 0);
-            $('#graphVisibleLinks').text(filteredLinksCount());
+            renderCurrentTopologyView();
+        });
+
+        $('#graphGenerateTopology, #graphInterfaceSelect').on('click change', function () {
+            renderCurrentTopologyView();
         });
 
         $('#graphZoomIn').on('click', function () {
@@ -739,17 +912,13 @@ $(document).ready(function () {
         $('#graphResetView').on('click', function () {
             graphState.selectedNodeId = null;
             resetGraphView();
-            renderGraph(graphState.rawNodes, graphState.rawLinks);
-            $('#graphVisibleNodes').text($('.tm-node').length || 0);
-            $('#graphVisibleLinks').text(filteredLinksCount());
+            renderCurrentTopologyView();
         });
 
         $('#graphResetLayout').on('click', function () {
             graphState.manualPositions = {};
             saveManualPositions();
-            renderGraph(graphState.rawNodes, graphState.rawLinks);
-            $('#graphVisibleNodes').text($('.tm-node').length || 0);
-            $('#graphVisibleLinks').text(filteredLinksCount());
+            renderCurrentTopologyView();
         });
 
         $('#graphExportLayout').on('click', function () {
@@ -790,9 +959,7 @@ $(document).ready(function () {
 
                 graphState.manualPositions = result.positions || {};
                 saveManualPositions();
-                renderGraph(graphState.rawNodes, graphState.rawLinks);
-                $('#graphVisibleNodes').text($('.tm-node').length || 0);
-                $('#graphVisibleLinks').text(filteredLinksCount());
+                renderCurrentTopologyView();
                 $('#responseMsg').removeClass('hidden alert-danger').addClass('alert-info').text('{{ lang._('Layout imported successfully.') }}');
             };
 
@@ -823,9 +990,7 @@ $(document).ready(function () {
             clearTimeout(resizeTimer);
         }
         resizeTimer = setTimeout(function () {
-            renderGraph(graphState.rawNodes, graphState.rawLinks);
-            $('#graphVisibleNodes').text($('.tm-node').length || 0);
-            $('#graphVisibleLinks').text(filteredLinksCount());
+            renderCurrentTopologyView();
         }, 150);
     });
 
@@ -882,6 +1047,11 @@ $(document).ready(function () {
     <div class="col-md-12">
         <div class="content-box tab-content table-responsive">
             <div style="padding: 10px 12px 6px 12px; border-bottom: 1px solid #e5e7eb; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                <label style="margin:0; font-weight: normal;">{{ lang._('Interface') }}</label>
+                <select id="graphInterfaceSelect" class="form-control" style="max-width: 220px;">
+                    <option value="all">{{ lang._('All interfaces') }}</option>
+                </select>
+                <button class="btn btn-primary btn-xs" id="graphGenerateTopology" type="button">{{ lang._('Generate Topology') }}</button>
                 <label style="margin:0; font-weight: normal;"><input type="checkbox" id="graphFilterInterface" checked="checked"> {{ lang._('Interface') }}</label>
                 <label style="margin:0; font-weight: normal;"><input type="checkbox" id="graphFilterHost" checked="checked"> {{ lang._('Host') }}</label>
                 <label style="margin:0; font-weight: normal;"><input type="checkbox" id="graphFilterLldp" checked="checked"> {{ lang._('LLDP Neighbor') }}</label>
@@ -894,7 +1064,7 @@ $(document).ready(function () {
                 <button class="btn btn-default btn-xs" id="graphExportLayout" type="button">{{ lang._('Export Layout') }}</button>
                 <button class="btn btn-default btn-xs" id="graphImportLayout" type="button">{{ lang._('Import Layout') }}</button>
                 <input type="file" id="graphImportLayoutFile" accept="application/json,.json" style="display:none;">
-                <span class="text-muted" style="margin-left:auto">{{ lang._('Zoom') }}: <span id="graphZoomValue">100%</span> | {{ lang._('Visible Nodes') }}: <span id="graphVisibleNodes">0</span> | {{ lang._('Visible Links') }}: <span id="graphVisibleLinks">0</span></span>
+                <span class="text-muted" style="margin-left:auto">{{ lang._('Focused Interface') }}: <span id="graphSelectionInfo">{{ lang._('All interfaces') }}</span> | {{ lang._('Zoom') }}: <span id="graphZoomValue">100%</span> | {{ lang._('Visible Nodes') }}: <span id="graphVisibleNodes">0</span> | {{ lang._('Visible Links') }}: <span id="graphVisibleLinks">0</span></span>
             </div>
             <table class="table table-striped __nomb" style="margin-bottom:0">
                 <tr><th class="listtopic">{{ lang._('Topology Graph') }}</th></tr>
