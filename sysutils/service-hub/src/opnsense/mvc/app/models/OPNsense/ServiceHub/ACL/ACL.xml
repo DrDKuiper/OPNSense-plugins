@@ -4,7 +4,8 @@
         <name>Services: Services Hub</name>
         <description>Allow access to the Services Hub overview</description>
         <patterns>
-            <pattern>ui/servicehub*</pattern>
+            <pattern>ui/servicehub</pattern>
+            <pattern>ui/servicehub/*</pattern>
             <pattern>api/servicehub/*</pattern>
         </patterns>
     </page-servicehub>
