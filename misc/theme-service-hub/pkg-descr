@@ -1,0 +1,6 @@
+Theme overlay that preserves the standard OPNsense look and hides
+all plugin entries under Services except Services Hub.
+
+Install and select the "servicehub" theme in System -> Settings -> General.
+
+WWW: https://opnsense.org
