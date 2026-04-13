@@ -3,7 +3,6 @@
 namespace OPNsense\ServiceHub\Api;
 
 use OPNsense\Base\ApiControllerBase;
-use OPNsense\Core\Backend;
 use OPNsense\Core\Config;
 use OPNsense\ServiceHub\ServiceHub;
 
@@ -167,7 +166,6 @@ class ServiceController extends ApiControllerBase
 
         $conf->system->theme = 'servicehub';
         $cfg->save();
-        (new Backend())->configdRun('webgui reload');
 
         return ['result' => 'saved'];
     }
@@ -194,7 +192,6 @@ class ServiceController extends ApiControllerBase
         $model->hub->previousTheme = '';
         $model->serializeToConfig();
         $cfg->save();
-        (new Backend())->configdRun('webgui reload');
 
         return ['result' => 'saved', 'theme' => $prevTheme];
     }

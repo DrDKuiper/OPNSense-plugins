@@ -493,6 +493,42 @@ $(document).ready(function () {
             $('#hubContent').html('<div class="alert alert-danger">Failed to load plugin list from API.</div>');
         }
     });
+
+    // ---- Diagnostic: show real sidebar HTML to calibrate CSS selectors ----
+    $(document).on('click', '#hubDiagBtn', function () {
+        var html = document.getElementById('navigation')
+            ? document.getElementById('navigation').innerHTML
+            : '(#navigation not found in DOM)';
+        // Summarise: find all <a> tags with href
+        var $nav = $('#navigation');
+        var lines = [];
+        $nav.find('a[href]').each(function () {
+            var el = this;
+            var ids = [];
+            $(el).parents('[id]').each(function () { ids.unshift('#' + this.id); });
+            lines.push(ids.join(' > ') + ' >> ' + el.href);
+        });
+        var summary = lines.length
+            ? lines.join('\n')
+            : html.substring(0, 4000);
+
+        var $modal = $('<div class="modal fade" tabindex="-1"></div>');
+        var $dialog = $('<div class="modal-dialog modal-lg"></div>');
+        var $content = $('<div class="modal-content"></div>');
+        $content.append(
+            '<div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>' +
+            '<h4 class="modal-title">Sidebar structure (copy and share for CSS calibration)</h4></div>',
+            $('<div class="modal-body"></div>').append(
+                $('<textarea class="form-control" rows="20" style="font-family:monospace;font-size:11px;"></textarea>')
+                    .val(summary)
+            ),
+            '<div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div>'
+        );
+        $dialog.append($content);
+        $modal.append($dialog);
+        $('body').append($modal);
+        $modal.modal('show').on('hidden.bs.modal', function () { $modal.remove(); });
+    });
 });
 </script>
 
@@ -511,6 +547,12 @@ $(document).ready(function () {
         </div>
 
         <div id="hubContent"></div>
+
+        <div style="margin-top:16px; text-align:right;">
+            <button id="hubDiagBtn" class="btn btn-link btn-xs" style="color:#bbb; font-size:11px;">
+                <i class="fa fa-stethoscope"></i> Diagnose sidebar structure
+            </button>
+        </div>
 
     </div>
 </div>

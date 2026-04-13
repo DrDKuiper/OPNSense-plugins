@@ -1,24 +1,61 @@
 @import url("/ui/themes/opnsense/build/css/main.css");
 
 /*
- * Services menu collapse overlay for Services Hub plugin.
- * Applied when the user enables "Collapse Services menu" in Services Hub settings.
+ * Services menu collapse overlay — Services Hub plugin.
  *
- * OPNsense renders each navigation section as a collapsible <ul> whose id
- * matches the lowercase section name, e.g. id="services".
- * We use that to target only the Services section without touching other sections.
+ * Covers all known OPNsense sidebar HTML patterns:
+ *
+ * Pattern A (Bootstrap panel-collapse, id="services"):
+ *   <div id="services" class="panel-collapse collapse in">
+ *     <ul class="list-group">
+ *       <li><a class="list-group-item" href="/ui/...">...</a></li>
+ *
+ * Pattern B (ul directly, id="services"):
+ *   <ul id="services"><li><a href="/ui/...">...
+ *
+ * Pattern C (sidebar list, data-section="Services"):
+ *   <li data-section="Services"><a href="/ui/...">...
+ *
+ * Pattern D (li with id containing "services"):
+ *   <li id="services_..."><a href="/ui/...">...
  */
 
-/* Hide every Services item except the Services Hub itself */
-ul#services > li > a.list-group-item:not([href*="servicehub"]),
-ul#services > li:not([class*="hub"]) > a.list-group-item:not([href*="servicehub"]),
-#services a.list-group-item:not([href*="servicehub"]) {
+/* --- Pattern A + B: container with id="services" --- */
+#services a.list-group-item:not([href*="servicehub"]),
+#services li > a:not([href*="servicehub"]),
+#services > a:not([href*="servicehub"]) {
     display: none !important;
 }
 
-/* Always keep Services Hub link visible and slightly emphasised */
+/* --- Pattern C: data-section attribute --- */
+[data-section="Services"] a:not([href*="servicehub"]),
+[data-category="Services"] a:not([href*="servicehub"]) {
+    display: none !important;
+}
+
+/* --- Pattern D: sibling items after the Services heading list-group-item --- */
+/* Fallback: hide all /ui/ plugin links in #navigation that are NOT:
+   - Services Hub itself
+   - Core paths (dashboard, firewall, interfaces, system, diagnostics, routing, reporting, vpn)
+   This is a broad fallback only active if patterns A-C didn't match. */
+#navigation a.list-group-item[href^="/ui/"]:not([href*="servicehub"])
+                                            :not([href*="/ui/dashboard"])
+                                            :not([href*="/ui/firewall"])
+                                            :not([href*="/ui/interfaces"])
+                                            :not([href*="/ui/diagnostics"])
+                                            :not([href*="/ui/routing"])
+                                            :not([href*="/ui/reporting"])
+                                            :not([href*="/ui/ids"])
+                                            :not([href*="/ui/trafficshaper"])
+                                            :not([href*="/ui/captiveportal"])
+                                            :not([href*="/ui/certs"]) {
+    display: none !important;
+}
+
+/* --- Always keep Services Hub visible and prominent --- */
 #services a.list-group-item[href*="servicehub"],
-ul#services a.list-group-item[href*="servicehub"] {
+#services li > a[href*="servicehub"],
+#navigation a[href*="servicehub"] {
     display: block !important;
     font-weight: 600;
 }
