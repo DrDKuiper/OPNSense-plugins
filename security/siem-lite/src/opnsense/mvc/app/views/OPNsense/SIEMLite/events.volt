@@ -19,8 +19,12 @@
         border: 1px solid rgba(128,128,128,0.3);
         border-radius: 4px;
         font-size: 0.9em;
-        background: inherit;
+        background-color: transparent;
         color: inherit;
+    }
+    .filter-bar select option {
+        background-color: #2b2b2b;
+        color: #e0e0e0;
     }
     .filter-bar select { min-width: 120px; }
     .filter-bar input[type="text"] { min-width: 250px; }

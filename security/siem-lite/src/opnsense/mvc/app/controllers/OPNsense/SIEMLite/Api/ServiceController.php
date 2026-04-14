@@ -44,13 +44,13 @@ class ServiceController extends ApiControllerBase
         $mdl = new General();
         $response = $backend->configdRun("siemlite status");
 
-        if (strpos($response, "not running") > 0) {
+        if (strpos($response, "not running") !== false) {
             if ($mdl->enabled->__toString() == 1) {
                 $status = "stopped";
             } else {
                 $status = "disabled";
             }
-        } elseif (strpos($response, "is running") > 0) {
+        } elseif (strpos($response, "is running") !== false) {
             $status = "running";
         } elseif ($mdl->enabled->__toString() == 0) {
             $status = "disabled";

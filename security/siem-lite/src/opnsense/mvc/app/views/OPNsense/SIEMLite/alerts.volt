@@ -33,8 +33,12 @@
         padding: 5px 10px;
         border: 1px solid rgba(128,128,128,0.3);
         border-radius: 4px;
-        background: inherit;
+        background-color: transparent;
         color: inherit;
+    }
+    .filter-bar select option {
+        background-color: #2b2b2b;
+        color: #e0e0e0;
     }
 </style>
 
