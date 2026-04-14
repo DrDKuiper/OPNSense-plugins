@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<model>
+    <mount>//OPNsense/SIEMLite/general</mount>
+    <description>SIEM-Lite general configuration</description>
+    <version>1.0.0</version>
+    <items>
+        <enabled type="BooleanField">
+            <Default>0</Default>
+            <Required>Y</Required>
+        </enabled>
+        <!-- Log sources -->
+        <source_filterlog type="BooleanField">
+            <Default>1</Default>
+            <Required>Y</Required>
+        </source_filterlog>
+        <source_suricata type="BooleanField">
+            <Default>1</Default>
+            <Required>Y</Required>
+        </source_suricata>
+        <source_squid type="BooleanField">
+            <Default>0</Default>
+            <Required>Y</Required>
+        </source_squid>
+        <source_openvpn type="BooleanField">
+            <Default>1</Default>
+            <Required>Y</Required>
+        </source_openvpn>
+        <source_auth type="BooleanField">
+            <Default>1</Default>
+            <Required>Y</Required>
+        </source_auth>
+        <source_system type="BooleanField">
+            <Default>1</Default>
+            <Required>Y</Required>
+        </source_system>
+        <source_cron type="BooleanField">
+            <Default>0</Default>
+            <Required>Y</Required>
+        </source_cron>
+        <source_lighttpd type="BooleanField">
+            <Default>1</Default>
+            <Required>Y</Required>
+        </source_lighttpd>
+        <!-- Correlation settings -->
+        <correlation_window type="IntegerField">
+            <Default>300</Default>
+            <MinimumValue>30</MinimumValue>
+            <MaximumValue>3600</MaximumValue>
+            <Required>Y</Required>
+        </correlation_window>
+        <correlation_threshold type="IntegerField">
+            <Default>5</Default>
+            <MinimumValue>2</MinimumValue>
+            <MaximumValue>100</MaximumValue>
+            <Required>Y</Required>
+        </correlation_threshold>
+        <!-- Retention -->
+        <retention_days type="IntegerField">
+            <Default>30</Default>
+            <MinimumValue>1</MinimumValue>
+            <MaximumValue>365</MaximumValue>
+            <Required>Y</Required>
+        </retention_days>
+        <max_events type="IntegerField">
+            <Default>500000</Default>
+            <MinimumValue>10000</MinimumValue>
+            <MaximumValue>10000000</MaximumValue>
+            <Required>Y</Required>
+        </max_events>
+        <!-- Processing -->
+        <scan_interval type="IntegerField">
+            <Default>10</Default>
+            <MinimumValue>5</MinimumValue>
+            <MaximumValue>60</MaximumValue>
+            <Required>Y</Required>
+        </scan_interval>
+        <geoip_enabled type="BooleanField">
+            <Default>1</Default>
+            <Required>Y</Required>
+        </geoip_enabled>
+        <!-- Risk scoring -->
+        <risk_critical_threshold type="IntegerField">
+            <Default>80</Default>
+            <MinimumValue>1</MinimumValue>
+            <MaximumValue>100</MaximumValue>
+            <Required>Y</Required>
+        </risk_critical_threshold>
+        <risk_high_threshold type="IntegerField">
+            <Default>60</Default>
+            <MinimumValue>1</MinimumValue>
+            <MaximumValue>100</MaximumValue>
+            <Required>Y</Required>
+        </risk_high_threshold>
+        <risk_medium_threshold type="IntegerField">
+            <Default>30</Default>
+            <MinimumValue>1</MinimumValue>
+            <MaximumValue>100</MaximumValue>
+            <Required>Y</Required>
+        </risk_medium_threshold>
+    </items>
+</model>

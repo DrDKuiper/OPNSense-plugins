@@ -1,0 +1,80 @@
+<form>
+    <field>
+        <type>header</type>
+        <label>Email Notifications</label>
+    </field>
+    <field>
+        <id>alert.email_enabled</id>
+        <label>Enable Email</label>
+        <type>checkbox</type>
+        <help>Send alert notifications via email (uses system mail settings).</help>
+    </field>
+    <field>
+        <id>alert.email_to</id>
+        <label>Recipient</label>
+        <type>text</type>
+        <help>Email address to receive alert notifications.</help>
+    </field>
+    <field>
+        <id>alert.email_min_severity</id>
+        <label>Minimum Severity</label>
+        <type>dropdown</type>
+        <help>Only send email for alerts at or above this severity.</help>
+    </field>
+    <field>
+        <type>header</type>
+        <label>Webhook Notifications</label>
+    </field>
+    <field>
+        <id>alert.webhook_enabled</id>
+        <label>Enable Webhook</label>
+        <type>checkbox</type>
+        <help>Send alert notifications to a webhook URL (Slack, Teams, etc).</help>
+    </field>
+    <field>
+        <id>alert.webhook_url</id>
+        <label>Webhook URL</label>
+        <type>text</type>
+        <help>HTTP(S) endpoint to POST alert JSON payloads.</help>
+    </field>
+    <field>
+        <id>alert.webhook_min_severity</id>
+        <label>Minimum Severity</label>
+        <type>dropdown</type>
+        <help>Only send webhook for alerts at or above this severity.</help>
+    </field>
+    <field>
+        <type>header</type>
+        <label>Syslog Forwarding</label>
+    </field>
+    <field>
+        <id>alert.syslog_enabled</id>
+        <label>Enable Syslog</label>
+        <type>checkbox</type>
+        <help>Forward alerts to an external syslog server (SIEM integration).</help>
+    </field>
+    <field>
+        <id>alert.syslog_host</id>
+        <label>Syslog Host</label>
+        <type>text</type>
+        <help>IP or hostname of the syslog server.</help>
+    </field>
+    <field>
+        <id>alert.syslog_port</id>
+        <label>Syslog Port</label>
+        <type>text</type>
+        <help>Port number (default: 514).</help>
+    </field>
+    <field>
+        <id>alert.syslog_protocol</id>
+        <label>Protocol</label>
+        <type>dropdown</type>
+        <help>Transport protocol for syslog messages.</help>
+    </field>
+    <field>
+        <id>alert.syslog_min_severity</id>
+        <label>Minimum Severity</label>
+        <type>dropdown</type>
+        <help>Only forward alerts at or above this severity.</help>
+    </field>
+</form>

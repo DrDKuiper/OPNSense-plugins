@@ -1,0 +1,130 @@
+<form>
+    <field>
+        <id>general.enabled</id>
+        <label>Enabled</label>
+        <type>checkbox</type>
+        <help>Enable SIEM-Lite log collection and analysis engine.</help>
+    </field>
+    <field>
+        <type>header</type>
+        <label>Log Sources</label>
+    </field>
+    <field>
+        <id>general.source_filterlog</id>
+        <label>Firewall (filterlog)</label>
+        <type>checkbox</type>
+        <help>Collect firewall filter log events (pass/block).</help>
+    </field>
+    <field>
+        <id>general.source_suricata</id>
+        <label>IDS/IPS (Suricata)</label>
+        <type>checkbox</type>
+        <help>Collect Suricata intrusion detection alerts.</help>
+    </field>
+    <field>
+        <id>general.source_squid</id>
+        <label>Web Proxy (Squid)</label>
+        <type>checkbox</type>
+        <help>Collect Squid proxy access logs.</help>
+    </field>
+    <field>
+        <id>general.source_openvpn</id>
+        <label>VPN (OpenVPN)</label>
+        <type>checkbox</type>
+        <help>Collect OpenVPN connection events.</help>
+    </field>
+    <field>
+        <id>general.source_auth</id>
+        <label>Authentication</label>
+        <type>checkbox</type>
+        <help>Collect authentication events (SSH, sudo, login).</help>
+    </field>
+    <field>
+        <id>general.source_system</id>
+        <label>System</label>
+        <type>checkbox</type>
+        <help>Collect general system log events.</help>
+    </field>
+    <field>
+        <id>general.source_cron</id>
+        <label>Cron</label>
+        <type>checkbox</type>
+        <help>Collect scheduled task events.</help>
+    </field>
+    <field>
+        <id>general.source_lighttpd</id>
+        <label>Web UI (lighttpd)</label>
+        <type>checkbox</type>
+        <help>Collect web GUI access logs.</help>
+    </field>
+    <field>
+        <type>header</type>
+        <label>Correlation Engine</label>
+    </field>
+    <field>
+        <id>general.correlation_window</id>
+        <label>Correlation Window (seconds)</label>
+        <type>text</type>
+        <help>Time window for event correlation (30-3600 seconds).</help>
+    </field>
+    <field>
+        <id>general.correlation_threshold</id>
+        <label>Correlation Threshold</label>
+        <type>text</type>
+        <help>Minimum related events to trigger a correlated alert.</help>
+    </field>
+    <field>
+        <type>header</type>
+        <label>Data Retention</label>
+    </field>
+    <field>
+        <id>general.retention_days</id>
+        <label>Retention (days)</label>
+        <type>text</type>
+        <help>Number of days to keep events in the database.</help>
+    </field>
+    <field>
+        <id>general.max_events</id>
+        <label>Max Events</label>
+        <type>text</type>
+        <help>Maximum number of events stored (oldest pruned first).</help>
+    </field>
+    <field>
+        <type>header</type>
+        <label>Processing</label>
+    </field>
+    <field>
+        <id>general.scan_interval</id>
+        <label>Scan Interval (seconds)</label>
+        <type>text</type>
+        <help>How often to scan log files for new entries.</help>
+    </field>
+    <field>
+        <id>general.geoip_enabled</id>
+        <label>GeoIP Enrichment</label>
+        <type>checkbox</type>
+        <help>Enrich events with geographic location data.</help>
+    </field>
+    <field>
+        <type>header</type>
+        <label>Risk Scoring</label>
+    </field>
+    <field>
+        <id>general.risk_critical_threshold</id>
+        <label>Critical Threshold</label>
+        <type>text</type>
+        <help>Risk score threshold for critical level (1-100).</help>
+    </field>
+    <field>
+        <id>general.risk_high_threshold</id>
+        <label>High Threshold</label>
+        <type>text</type>
+        <help>Risk score threshold for high level (1-100).</help>
+    </field>
+    <field>
+        <id>general.risk_medium_threshold</id>
+        <label>Medium Threshold</label>
+        <type>text</type>
+        <help>Risk score threshold for medium level (1-100).</help>
+    </field>
+</form>

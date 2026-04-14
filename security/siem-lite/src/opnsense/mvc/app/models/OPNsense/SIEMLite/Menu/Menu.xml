@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<menu>
+    <Services>
+        <SIEMLite VisibleName="SIEM" cssClass="fa fa-shield" order="5">
+            <Dashboard order="10" url="/ui/siemlite/dashboard" VisibleName="Dashboard"/>
+            <Events order="20" url="/ui/siemlite/events" VisibleName="Events"/>
+            <Alerts order="30" url="/ui/siemlite/alerts" VisibleName="Alerts"/>
+            <SigmaRules order="40" url="/ui/siemlite/sigmarules" VisibleName="Sigma Rules"/>
+            <Settings order="50" url="/ui/siemlite/settings" VisibleName="Settings"/>
+        </SIEMLite>
+    </Services>
+</menu>

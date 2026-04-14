@@ -1,0 +1,39 @@
+{% if helpers.exists('OPNsense.SIEMLite.general') %}
+{
+    "enabled": "{{ OPNsense.SIEMLite.general.enabled|default('0') }}",
+    "source_firewall": "{{ OPNsense.SIEMLite.general.source_filterlog|default('1') }}",
+    "source_ids": "{{ OPNsense.SIEMLite.general.source_suricata|default('1') }}",
+    "source_proxy": "{{ OPNsense.SIEMLite.general.source_squid|default('0') }}",
+    "source_vpn": "{{ OPNsense.SIEMLite.general.source_openvpn|default('1') }}",
+    "source_auth": "{{ OPNsense.SIEMLite.general.source_auth|default('1') }}",
+    "source_system": "{{ OPNsense.SIEMLite.general.source_system|default('1') }}",
+    "source_cron": "{{ OPNsense.SIEMLite.general.source_cron|default('0') }}",
+    "source_webui": "{{ OPNsense.SIEMLite.general.source_lighttpd|default('1') }}",
+    "correlation_window": "{{ OPNsense.SIEMLite.general.correlation_window|default('300') }}",
+    "correlation_threshold": "{{ OPNsense.SIEMLite.general.correlation_threshold|default('5') }}",
+    "retention_days": "{{ OPNsense.SIEMLite.general.retention_days|default('30') }}",
+    "max_events": "{{ OPNsense.SIEMLite.general.max_events|default('500000') }}",
+    "scan_interval": "{{ OPNsense.SIEMLite.general.scan_interval|default('10') }}",
+    "geoip_enabled": "{{ OPNsense.SIEMLite.general.geoip_enabled|default('1') }}",
+    "risk_critical_threshold": "{{ OPNsense.SIEMLite.general.risk_critical_threshold|default('80') }}",
+    "risk_high_threshold": "{{ OPNsense.SIEMLite.general.risk_high_threshold|default('60') }}",
+    "risk_medium_threshold": "{{ OPNsense.SIEMLite.general.risk_medium_threshold|default('30') }}",
+{% if helpers.exists('OPNsense.SIEMLite.alert') %}
+    "email_enabled": "{{ OPNsense.SIEMLite.alert.email_enabled|default('0') }}",
+    "email_to": "{{ OPNsense.SIEMLite.alert.email_to|default('') }}",
+    "email_min_severity": "{{ OPNsense.SIEMLite.alert.email_min_severity|default('high') }}",
+    "webhook_enabled": "{{ OPNsense.SIEMLite.alert.webhook_enabled|default('0') }}",
+    "webhook_url": "{{ OPNsense.SIEMLite.alert.webhook_url|default('') }}",
+    "webhook_min_severity": "{{ OPNsense.SIEMLite.alert.webhook_min_severity|default('medium') }}",
+    "syslog_enabled": "{{ OPNsense.SIEMLite.alert.syslog_enabled|default('0') }}",
+    "syslog_host": "{{ OPNsense.SIEMLite.alert.syslog_host|default('') }}",
+    "syslog_port": "{{ OPNsense.SIEMLite.alert.syslog_port|default('514') }}",
+    "syslog_protocol": "{{ OPNsense.SIEMLite.alert.syslog_protocol|default('udp') }}",
+    "syslog_min_severity": "{{ OPNsense.SIEMLite.alert.syslog_min_severity|default('low') }}"
+{% else %}
+    "webhook_enabled": "0",
+    "syslog_enabled": "0",
+    "email_enabled": "0"
+{% endif %}
+}
+{% endif %}

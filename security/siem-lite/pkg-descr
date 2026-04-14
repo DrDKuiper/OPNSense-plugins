@@ -1,0 +1,34 @@
+OPNsense SIEM-Lite Plugin
+=========================
+
+Lightweight Security Information and Event Management (SIEM) built directly into
+OPNsense. Provides real-time log correlation, Sigma rule-based threat detection,
+security dashboards, incident timeline, and alerting — all without external
+dependencies.
+
+Features:
+- Multi-source log ingestion (firewall, IDS/IPS, proxy, VPN, auth, system)
+- Sigma rule engine for standardised threat detection
+- Event correlation with configurable time windows
+- Security dashboard with geo-map, top threats, risk score
+- Incident timeline and investigation workflow
+- Alert management with severity levels and notification channels
+- Compliance-ready audit trail and reporting
+- Built-in rule library with automatic updates
+
+Changelog
+---------
+
+1.0
+* Initial release
+* Multi-source log collector (filterlog, suricata, squid, openvpn, syslog)
+* Sigma rule engine with YAML rule support
+* Event correlation engine with sliding time windows
+* Security analytics dashboard
+* Alert management with email/webhook/syslog forwarding
+* Incident timeline with drill-down
+* GeoIP enrichment for source/destination IPs
+* Risk scoring based on alert severity and frequency
+* Built-in Sigma rules for common attack patterns
+
+WWW: https://opnsense.org

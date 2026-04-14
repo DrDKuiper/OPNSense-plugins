@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<model>
+    <mount>//OPNsense/SIEMLite/alert</mount>
+    <description>SIEM-Lite alert notification configuration</description>
+    <version>1.0.0</version>
+    <items>
+        <!-- Email notifications -->
+        <email_enabled type="BooleanField">
+            <Default>0</Default>
+            <Required>Y</Required>
+        </email_enabled>
+        <email_to type="TextField">
+            <Required>N</Required>
+            <Mask>/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/u</Mask>
+            <ValidationMessage>Please enter a valid email address.</ValidationMessage>
+        </email_to>
+        <email_min_severity type="OptionField">
+            <Default>high</Default>
+            <Required>Y</Required>
+            <OptionValues>
+                <low>Low</low>
+                <medium>Medium</medium>
+                <high>High</high>
+                <critical>Critical</critical>
+            </OptionValues>
+        </email_min_severity>
+        <!-- Webhook notifications -->
+        <webhook_enabled type="BooleanField">
+            <Default>0</Default>
+            <Required>Y</Required>
+        </webhook_enabled>
+        <webhook_url type="TextField">
+            <Required>N</Required>
+        </webhook_url>
+        <webhook_min_severity type="OptionField">
+            <Default>medium</Default>
+            <Required>Y</Required>
+            <OptionValues>
+                <low>Low</low>
+                <medium>Medium</medium>
+                <high>High</high>
+                <critical>Critical</critical>
+            </OptionValues>
+        </webhook_min_severity>
+        <!-- Syslog forwarding -->
+        <syslog_enabled type="BooleanField">
+            <Default>0</Default>
+            <Required>Y</Required>
+        </syslog_enabled>
+        <syslog_host type="TextField">
+            <Required>N</Required>
+        </syslog_host>
+        <syslog_port type="IntegerField">
+            <Default>514</Default>
+            <MinimumValue>1</MinimumValue>
+            <MaximumValue>65535</MaximumValue>
+            <Required>N</Required>
+        </syslog_port>
+        <syslog_protocol type="OptionField">
+            <Default>udp</Default>
+            <Required>Y</Required>
+            <OptionValues>
+                <udp>UDP</udp>
+                <tcp>TCP</tcp>
+            </OptionValues>
+        </syslog_protocol>
+        <syslog_min_severity type="OptionField">
+            <Default>low</Default>
+            <Required>Y</Required>
+            <OptionValues>
+                <low>Low</low>
+                <medium>Medium</medium>
+                <high>High</high>
+                <critical>Critical</critical>
+            </OptionValues>
+        </syslog_min_severity>
+    </items>
+</model>

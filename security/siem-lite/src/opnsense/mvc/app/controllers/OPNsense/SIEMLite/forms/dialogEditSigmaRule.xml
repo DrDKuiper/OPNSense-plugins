@@ -1,0 +1,74 @@
+<form>
+    <field>
+        <id>rule.enabled</id>
+        <label>Enabled</label>
+        <type>checkbox</type>
+        <help>Enable this detection rule.</help>
+    </field>
+    <field>
+        <id>rule.title</id>
+        <label>Title</label>
+        <type>text</type>
+        <help>Rule name displayed in alerts.</help>
+    </field>
+    <field>
+        <id>rule.description</id>
+        <label>Description</label>
+        <type>text</type>
+        <help>Detailed description of what this rule detects.</help>
+    </field>
+    <field>
+        <id>rule.severity</id>
+        <label>Severity</label>
+        <type>dropdown</type>
+        <help>Alert severity level.</help>
+    </field>
+    <field>
+        <id>rule.logsource</id>
+        <label>Log Source</label>
+        <type>dropdown</type>
+        <help>Which log source to monitor.</help>
+    </field>
+    <field>
+        <id>rule.detection_pattern</id>
+        <label>Detection Pattern</label>
+        <type>text</type>
+        <help>Pattern to match in log entries. Syntax depends on condition type.</help>
+    </field>
+    <field>
+        <id>rule.condition</id>
+        <label>Condition Type</label>
+        <type>dropdown</type>
+        <help>How to evaluate the detection pattern.</help>
+    </field>
+    <field>
+        <id>rule.threshold</id>
+        <label>Threshold</label>
+        <type>text</type>
+        <help>Number of matches before triggering (for count/frequency conditions).</help>
+    </field>
+    <field>
+        <id>rule.timewindow</id>
+        <label>Time Window (seconds)</label>
+        <type>text</type>
+        <help>Evaluation window for frequency-based rules.</help>
+    </field>
+    <field>
+        <id>rule.mitre_tactic</id>
+        <label>MITRE Tactic</label>
+        <type>text</type>
+        <help>MITRE ATT&amp;CK tactic ID (e.g. TA0001).</help>
+    </field>
+    <field>
+        <id>rule.mitre_technique</id>
+        <label>MITRE Technique</label>
+        <type>text</type>
+        <help>MITRE ATT&amp;CK technique ID (e.g. T1110).</help>
+    </field>
+    <field>
+        <id>rule.tags</id>
+        <label>Tags</label>
+        <type>text</type>
+        <help>Comma-separated tags for categorisation.</help>
+    </field>
+</form>

@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<model>
+    <mount>//OPNsense/SIEMLite/sigmarule</mount>
+    <description>SIEM-Lite Sigma rules</description>
+    <version>1.0.0</version>
+    <items>
+        <rules>
+            <rule type="ArrayField">
+                <enabled type="BooleanField">
+                    <Default>1</Default>
+                    <Required>Y</Required>
+                </enabled>
+                <title type="TextField">
+                    <Required>Y</Required>
+                    <Mask>/^.{1,256}$/u</Mask>
+                    <ValidationMessage>Title is required (max 256 chars).</ValidationMessage>
+                </title>
+                <description type="TextField">
+                    <Required>N</Required>
+                </description>
+                <severity type="OptionField">
+                    <Default>medium</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <low>Low</low>
+                        <medium>Medium</medium>
+                        <high>High</high>
+                        <critical>Critical</critical>
+                    </OptionValues>
+                </severity>
+                <logsource type="OptionField">
+                    <Default>firewall</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <firewall>Firewall (filterlog)</firewall>
+                        <ids>IDS/IPS (Suricata)</ids>
+                        <proxy>Web Proxy (Squid)</proxy>
+                        <vpn>VPN (OpenVPN)</vpn>
+                        <auth>Authentication</auth>
+                        <system>System</system>
+                        <webui>Web UI (lighttpd)</webui>
+                        <any>Any source</any>
+                    </OptionValues>
+                </logsource>
+                <detection_pattern type="TextField">
+                    <Required>Y</Required>
+                    <Mask>/^.{1,4096}$/us</Mask>
+                    <ValidationMessage>Detection pattern is required.</ValidationMessage>
+                </detection_pattern>
+                <condition type="OptionField">
+                    <Default>contains</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <contains>Contains</contains>
+                        <regex>Regex</regex>
+                        <count_gt>Count greater than</count_gt>
+                        <count_lt>Count less than</count_lt>
+                        <frequency>Frequency (events/window)</frequency>
+                    </OptionValues>
+                </condition>
+                <threshold type="IntegerField">
+                    <Default>1</Default>
+                    <MinimumValue>1</MinimumValue>
+                    <MaximumValue>10000</MaximumValue>
+                    <Required>Y</Required>
+                </threshold>
+                <timewindow type="IntegerField">
+                    <Default>300</Default>
+                    <MinimumValue>10</MinimumValue>
+                    <MaximumValue>86400</MaximumValue>
+                    <Required>Y</Required>
+                </timewindow>
+                <mitre_tactic type="TextField">
+                    <Required>N</Required>
+                </mitre_tactic>
+                <mitre_technique type="TextField">
+                    <Required>N</Required>
+                </mitre_technique>
+                <tags type="TextField">
+                    <Required>N</Required>
+                </tags>
+                <builtin type="BooleanField">
+                    <Default>0</Default>
+                    <Required>Y</Required>
+                </builtin>
+            </rule>
+        </rules>
+    </items>
+</model>

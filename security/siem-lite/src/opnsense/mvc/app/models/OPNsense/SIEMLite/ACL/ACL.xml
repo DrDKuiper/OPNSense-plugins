@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<ACL>
+    <Patterns>
+        <Pattern>ui/siemlite/*</Pattern>
+        <Pattern>api/siemlite/*</Pattern>
+    </Patterns>
+</ACL>
