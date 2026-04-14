@@ -85,8 +85,13 @@ $(document).ready(function() {
         }
         var $btn = $(this);
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-pulse"></i> Loading...');
-        ajaxCall("/api/siemlite/service/reconfigure", {loadBuiltinRules: '1'}, function() {
+        ajaxCall("/api/siemlite/sigmarule/loadBuiltin", {}, function(data) {
             $btn.prop('disabled', false).html('<i class="fa fa-download"></i> Load Built-in Rules');
+            if (data && data.result === 'saved') {
+                alert(data.count + ' built-in rules loaded successfully.');
+            } else {
+                alert('Failed to load rules: ' + (data.message || 'unknown error'));
+            }
             $("#grid-sigmarules").bootgrid('reload');
         });
     });

@@ -8,15 +8,13 @@
 
 <style>
     .siem-card {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        padding: 20px;
+        border-radius: 6px;
+        padding: 18px;
         margin-bottom: 15px;
         border-left: 4px solid #337ab7;
-        transition: box-shadow 0.2s;
+        border: 1px solid rgba(128,128,128,0.2);
+        border-left: 4px solid #337ab7;
     }
-    .siem-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
     .siem-card.critical { border-left-color: #d9534f; }
     .siem-card.high { border-left-color: #f0ad4e; }
     .siem-card.medium { border-left-color: #5bc0de; }
@@ -28,7 +26,7 @@
         line-height: 1.1;
     }
     .stat-label {
-        color: #777;
+        opacity: 0.7;
         font-size: 0.85em;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -36,7 +34,7 @@
     .risk-gauge {
         width: 100%;
         height: 24px;
-        background: #e9ecef;
+        background: rgba(128,128,128,0.2);
         border-radius: 12px;
         overflow: hidden;
         margin-top: 8px;
@@ -69,7 +67,7 @@
         display: flex;
         justify-content: space-between;
         padding: 6px 0;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid rgba(128,128,128,0.15);
         font-size: 0.9em;
     }
     .top-list li:last-child { border-bottom: none; }
@@ -84,7 +82,6 @@
     .siem-header h2 {
         margin: 0;
         font-weight: 300;
-        color: #333;
     }
     .time-selector .btn { padding: 4px 12px; font-size: 0.85em; }
     .time-selector .btn.active { background: #337ab7; color: #fff; }
@@ -97,12 +94,12 @@
     .source-bar .label-text {
         width: 120px;
         font-size: 0.85em;
-        color: #555;
+        opacity: 0.7;
     }
     .source-bar .bar-track {
         flex: 1;
         height: 18px;
-        background: #e9ecef;
+        background: rgba(128,128,128,0.2);
         border-radius: 4px;
         overflow: hidden;
     }
@@ -116,18 +113,31 @@
         text-align: right;
         font-size: 0.85em;
         font-weight: 600;
-        color: #333;
+    }
+    .siem-nodata {
+        text-align: center;
+        padding: 30px 10px;
+        opacity: 0.5;
+        font-size: 0.95em;
     }
 </style>
 
 <div class="siem-header">
     <h2><i class="fa fa-shield"></i> SIEM Dashboard</h2>
-    <div class="btn-group time-selector" id="timeRangeSelector">
-        <button class="btn btn-default" data-range="1h">1H</button>
-        <button class="btn btn-default active" data-range="24h">24H</button>
-        <button class="btn btn-default" data-range="7d">7D</button>
-        <button class="btn btn-default" data-range="30d">30D</button>
+    <div style="display:flex; align-items:center; gap:15px;">
+        <span id="siem-service-status"></span>
+        <div class="btn-group time-selector" id="timeRangeSelector">
+            <button class="btn btn-default" data-range="1h">1H</button>
+            <button class="btn btn-default active" data-range="24h">24H</button>
+            <button class="btn btn-default" data-range="7d">7D</button>
+            <button class="btn btn-default" data-range="30d">30D</button>
+        </div>
     </div>
+</div>
+
+<div class="alert alert-warning" id="siem-not-running" style="display:none;">
+    <i class="fa fa-exclamation-triangle"></i>
+    {{ lang._('SIEM engine is not running. Go to') }} <a href="/ui/siemlite/settings">{{ lang._('Settings') }}</a> {{ lang._('to enable and start the service.') }}
 </div>
 
 <!-- KPI Cards Row -->
@@ -147,25 +157,25 @@
     <div class="col-md-2">
         <div class="siem-card critical">
             <div class="stat-label">Critical</div>
-            <div class="stat-value" id="stat-critical" style="color:#d9534f">—</div>
+            <div class="stat-value text-danger" id="stat-critical">—</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="siem-card high">
             <div class="stat-label">High</div>
-            <div class="stat-value" id="stat-high" style="color:#f0ad4e">—</div>
+            <div class="stat-value text-warning" id="stat-high">—</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="siem-card medium">
             <div class="stat-label">Medium</div>
-            <div class="stat-value" id="stat-medium" style="color:#5bc0de">—</div>
+            <div class="stat-value text-info" id="stat-medium">—</div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="siem-card low">
             <div class="stat-label">Low</div>
-            <div class="stat-value" id="stat-low" style="color:#5cb85c">—</div>
+            <div class="stat-value text-success" id="stat-low">—</div>
         </div>
     </div>
 </div>
@@ -179,7 +189,7 @@
             <div class="risk-gauge">
                 <div class="risk-gauge-fill" id="risk-gauge-fill" style="width:0%; background:#5cb85c;"></div>
             </div>
-            <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:0.75em; color:#999;">
+            <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:0.75em; opacity:0.6;">
                 <span>Low</span><span>Medium</span><span>High</span><span>Critical</span>
             </div>
         </div>
@@ -263,55 +273,85 @@ $(document).ready(function() {
 
             // Top Sources
             var $src = $('#top-sources').empty();
-            $.each(data.top_sources || [], function(i, item) {
-                $src.append('<li><span>' + $('<span>').text(item.ip).html() +
-                    (item.country ? ' <i class="fa fa-globe" style="color:#999"></i> ' + $('<span>').text(item.country).html() : '') +
-                    '</span><span class="count">' + formatNumber(item.count) + '</span></li>');
-            });
+            if (!data.top_sources || data.top_sources.length === 0) {
+                $src.append('<li class="siem-nodata">No data available</li>');
+            } else {
+                $.each(data.top_sources, function(i, item) {
+                    $src.append('<li><span>' + $('<span>').text(item.ip).html() +
+                        (item.country ? ' <i class="fa fa-globe" style="opacity:0.5"></i> ' + $('<span>').text(item.country).html() : '') +
+                        '</span><span class="count">' + formatNumber(item.count) + '</span></li>');
+                });
+            }
 
             // Top Destinations
             var $dst = $('#top-destinations').empty();
-            $.each(data.top_destinations || [], function(i, item) {
-                $dst.append('<li><span>' + $('<span>').text(item.ip).html() +
-                    '</span><span class="count">' + formatNumber(item.count) + '</span></li>');
-            });
+            if (!data.top_destinations || data.top_destinations.length === 0) {
+                $dst.append('<li class="siem-nodata">No data available</li>');
+            } else {
+                $.each(data.top_destinations, function(i, item) {
+                    $dst.append('<li><span>' + $('<span>').text(item.ip).html() +
+                        '</span><span class="count">' + formatNumber(item.count) + '</span></li>');
+                });
+            }
 
             // Top Rules
             var $rules = $('#top-rules').empty();
-            $.each(data.top_rules || [], function(i, item) {
-                $rules.append('<li><span>' + $('<span>').text(item.title).html() +
-                    ' <span class="severity-badge ' + item.severity + '">' + item.severity + '</span>' +
-                    '</span><span class="count">' + item.count + '</span></li>');
-            });
+            if (!data.top_rules || data.top_rules.length === 0) {
+                $rules.append('<li class="siem-nodata">No data available</li>');
+            } else {
+                $.each(data.top_rules, function(i, item) {
+                    $rules.append('<li><span>' + $('<span>').text(item.title).html() +
+                        ' <span class="severity-badge ' + item.severity + '">' + item.severity + '</span>' +
+                        '</span><span class="count">' + item.count + '</span></li>');
+                });
+            }
 
             // Source Distribution
             var $dist = $('#source-distribution').empty();
-            var maxCount = 0;
-            $.each(data.source_distribution || [], function(i, item) {
-                if (item.count > maxCount) maxCount = item.count;
-            });
-            $.each(data.source_distribution || [], function(i, item) {
-                var pct = maxCount > 0 ? (item.count / maxCount * 100) : 0;
-                var color = sourceColors[item.source] || '#337ab7';
-                $dist.append(
-                    '<div class="source-bar">' +
-                    '<span class="label-text">' + $('<span>').text(item.source).html() + '</span>' +
-                    '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + color + '"></div></div>' +
-                    '<span class="bar-count">' + formatNumber(item.count) + '</span>' +
-                    '</div>'
-                );
-            });
+            if (!data.source_distribution || data.source_distribution.length === 0) {
+                $dist.append('<div class="siem-nodata">No data available</div>');
+            } else {
+                var maxCount = 0;
+                $.each(data.source_distribution, function(i, item) {
+                    if (item.count > maxCount) maxCount = item.count;
+                });
+                $.each(data.source_distribution, function(i, item) {
+                    var pct = maxCount > 0 ? (item.count / maxCount * 100) : 0;
+                    var color = sourceColors[item.source] || '#337ab7';
+                    $dist.append(
+                        '<div class="source-bar">' +
+                        '<span class="label-text">' + $('<span>').text(item.source).html() + '</span>' +
+                        '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + color + '"></div></div>' +
+                        '<span class="bar-count">' + formatNumber(item.count) + '</span>' +
+                        '</div>'
+                    );
+                });
+            }
 
             // Geo Data
             var $geo = $('#geo-data').empty();
-            $.each(data.geo_data || [], function(i, item) {
-                $geo.append('<li><span><i class="fa fa-map-marker" style="color:#d9534f"></i> ' +
-                    $('<span>').text(item.country).html() +
-                    '</span><span class="count">' + formatNumber(item.count) + '</span></li>');
-            });
+            if (!data.geo_data || data.geo_data.length === 0) {
+                $geo.append('<li class="siem-nodata">No data available</li>');
+            } else {
+                $.each(data.geo_data, function(i, item) {
+                    $geo.append('<li><span><i class="fa fa-map-marker text-danger"></i> ' +
+                        $('<span>').text(item.country).html() +
+                        '</span><span class="count">' + formatNumber(item.count) + '</span></li>');
+                });
+            }
 
             // Timeline Chart
             renderTimeline(data.events_timeline || []);
+        }).fail(function() {
+            // Service not running - show friendly message
+            $('#stat-total-events').text('0');
+            $('#stat-total-alerts').text('0');
+            $('#stat-critical').text('0');
+            $('#stat-high').text('0');
+            $('#stat-medium').text('0');
+            $('#stat-low').text('0');
+            $('#risk-score-value').text('0/100');
+            renderTimeline([]);
         });
     }
 
@@ -323,11 +363,17 @@ $(document).ready(function() {
         var H = canvas.height = 170;
         ctx.clearRect(0, 0, W, H);
 
+        // Detect theme text color from computed styles
+        var textColor = getComputedStyle(canvas.parentElement).color || '#999';
+        var gridColor = 'rgba(128,128,128,0.2)';
+
         if (timeline.length === 0) {
-            ctx.fillStyle = '#ccc';
+            ctx.fillStyle = textColor;
+            ctx.globalAlpha = 0.4;
             ctx.font = '14px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText('No data available', W / 2, H / 2);
+            ctx.globalAlpha = 1;
             return;
         }
 
@@ -336,15 +382,17 @@ $(document).ready(function() {
         var chartH = H - 30;
 
         // Grid lines
-        ctx.strokeStyle = '#e9ecef';
+        ctx.strokeStyle = gridColor;
         ctx.lineWidth = 1;
         for (var g = 0; g <= 4; g++) {
             var gy = chartH - (chartH / 4 * g);
             ctx.beginPath(); ctx.moveTo(35, gy); ctx.lineTo(W, gy); ctx.stroke();
-            ctx.fillStyle = '#999';
+            ctx.fillStyle = textColor;
+            ctx.globalAlpha = 0.5;
             ctx.font = '10px sans-serif';
             ctx.textAlign = 'right';
             ctx.fillText(formatNumber(Math.round(maxVal / 4 * g)), 32, gy + 3);
+            ctx.globalAlpha = 1;
         }
 
         // Bars
@@ -359,7 +407,8 @@ $(document).ready(function() {
         });
 
         // X-axis labels (show a subset)
-        ctx.fillStyle = '#999';
+        ctx.fillStyle = textColor;
+        ctx.globalAlpha = 0.5;
         ctx.font = '10px sans-serif';
         ctx.textAlign = 'center';
         var step = Math.max(1, Math.floor(timeline.length / 8));
@@ -367,6 +416,7 @@ $(document).ready(function() {
             var lx = 40 + j * (barW + 1) + barW / 2;
             ctx.fillText(timeline[j].label || '', lx, H - 2);
         }
+        ctx.globalAlpha = 1;
     }
 
     // Time range selector
@@ -380,5 +430,24 @@ $(document).ready(function() {
     // Auto-refresh every 30 seconds
     loadDashboard();
     setInterval(loadDashboard, 30000);
+
+    // Check service status
+    function checkServiceStatus() {
+        $.get('/api/siemlite/service/status', function(data) {
+            var $badge = $('#siem-service-status');
+            if (data.status === 'running') {
+                $badge.html('<span class="label label-success"><i class="fa fa-check-circle"></i> Running</span>');
+                $('#siem-not-running').hide();
+            } else if (data.status === 'disabled') {
+                $badge.html('<span class="label label-default"><i class="fa fa-minus-circle"></i> Disabled</span>');
+                $('#siem-not-running').show();
+            } else {
+                $badge.html('<span class="label label-danger"><i class="fa fa-times-circle"></i> Stopped</span>');
+                $('#siem-not-running').show();
+            }
+        });
+    }
+    checkServiceStatus();
+    setInterval(checkServiceStatus, 15000);
 });
 </script>

@@ -5,7 +5,6 @@
 
 <style>
     .filter-bar {
-        background: #f8f9fa;
         padding: 12px 15px;
         border-radius: 6px;
         margin-bottom: 15px;
@@ -13,12 +12,15 @@
         gap: 10px;
         align-items: center;
         flex-wrap: wrap;
+        border: 1px solid rgba(128,128,128,0.2);
     }
     .filter-bar select, .filter-bar input {
         padding: 5px 10px;
-        border: 1px solid #ddd;
+        border: 1px solid rgba(128,128,128,0.3);
         border-radius: 4px;
         font-size: 0.9em;
+        background: inherit;
+        color: inherit;
     }
     .filter-bar select { min-width: 120px; }
     .filter-bar input[type="text"] { min-width: 250px; }
@@ -32,14 +34,6 @@
     .severity-dot.high { background: #f0ad4e; }
     .severity-dot.medium { background: #5bc0de; }
     .severity-dot.low { background: #5cb85c; }
-    .event-detail-modal .modal-body pre {
-        max-height: 400px;
-        overflow-y: auto;
-        background: #f5f5f5;
-        padding: 10px;
-        border-radius: 4px;
-        font-size: 0.85em;
-    }
 </style>
 
 <h2 style="font-weight:300; margin-bottom:15px;">

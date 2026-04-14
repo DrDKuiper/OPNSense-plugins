@@ -16,17 +16,33 @@
         color: #fff;
     }
     .severity-badge.critical { background: #d9534f; }
-    .severity-badge.high { background: #f0ad4e; color: #333; }
+    .severity-badge.high { background: #f0ad4e; }
     .severity-badge.medium { background: #5bc0de; }
     .severity-badge.low { background: #5cb85c; }
     .alert-detail-events { max-height: 300px; overflow-y: auto; }
+    .filter-bar {
+        padding: 12px 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid rgba(128,128,128,0.2);
+    }
+    .filter-bar select, .filter-bar input {
+        padding: 5px 10px;
+        border: 1px solid rgba(128,128,128,0.3);
+        border-radius: 4px;
+        background: inherit;
+        color: inherit;
+    }
 </style>
 
 <h2 style="font-weight:300; margin-bottom:15px;">
     <i class="fa fa-bell"></i> {{ lang._('Security Alerts') }}
 </h2>
 
-<div class="filter-bar" style="background:#f8f9fa; padding:12px 15px; border-radius:6px; margin-bottom:15px; display:flex; gap:10px; align-items:center;">
+<div class="filter-bar">
     <select id="alert-filter-severity">
         <option value="">All Severities</option>
         <option value="critical">Critical</option>
@@ -46,7 +62,7 @@
         <option value="7d">Last 7 Days</option>
         <option value="30d">Last 30 Days</option>
     </select>
-    <input type="text" id="alert-filter-search" placeholder="Search alerts..." style="min-width:250px; padding:5px 10px; border:1px solid #ddd; border-radius:4px;"/>
+    <input type="text" id="alert-filter-search" placeholder="Search alerts..." style="min-width:250px; padding:5px 10px; border:1px solid rgba(128,128,128,0.3); border-radius:4px; background:inherit; color:inherit;"/>
     <button class="btn btn-primary btn-sm" id="btn-alert-refresh"><i class="fa fa-refresh"></i> {{ lang._('Refresh') }}</button>
 </div>
 
