@@ -1,16 +1,16 @@
 #!/bin/sh
-
-# SIEM-Lite RC script for OPNsense
-# Manages the siemlite_engine daemon
+#
+# PROVIDE: siemlite
+# REQUIRE: SERVERS
+# KEYWORD: shutdown
 
 . /etc/rc.subr
 
 name="siemlite"
 rcvar="siemlite_enable"
-pidfile="/var/run/siemlite.pid"
-command="/usr/local/opnsense/scripts/OPNsense/SIEMLite/siemlite_engine.py"
-command_args="daemon &"
-command_interpreter="/usr/local/bin/python3"
+pidfile="/var/run/${name}.pid"
+command="/usr/sbin/daemon"
+command_args="-f -P ${pidfile} /usr/local/bin/python3 /usr/local/opnsense/scripts/OPNsense/SIEMLite/siemlite_engine.py"
 
 start_precmd="siemlite_prestart"
 stop_postcmd="siemlite_poststop"
@@ -29,4 +29,5 @@ siemlite_poststop()
 }
 
 load_rc_config $name
+: ${siemlite_enable="NO"}
 run_rc_command "$1"

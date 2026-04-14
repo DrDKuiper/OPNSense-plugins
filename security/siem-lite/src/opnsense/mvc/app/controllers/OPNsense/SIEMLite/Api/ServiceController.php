@@ -67,12 +67,12 @@ class ServiceController extends ApiControllerBase
             $mdl = new General();
             $backend = new Backend();
 
-            $this->stopAction();
             $backend->configdRun('template reload OPNsense/SIEMLite');
 
             if ($mdl->enabled->__toString() == 1) {
-                $backend->configdRun("siemlite reconfigure");
-                $this->startAction();
+                $backend->configdRun("siemlite restart");
+            } else {
+                $backend->configdRun("siemlite stop");
             }
 
             return array("status" => "ok");
