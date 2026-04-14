@@ -31,7 +31,7 @@ class AlertController extends ApiControllerBase
             'time_range' => $timeRange
         ));
 
-        $response = $backend->configdpRun("siemlite query-alerts", array($params));
+        $response = $backend->configdpRun("siemlite query-alerts", array(escapeshellarg($params)));
         $data = json_decode($response, true);
 
         if (!is_array($data)) {

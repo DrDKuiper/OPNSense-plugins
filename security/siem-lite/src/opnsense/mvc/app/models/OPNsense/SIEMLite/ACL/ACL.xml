@@ -1,9 +1,9 @@
 <acl>
-    <page-services-siemlite>
-        <name>Services: SIEM Lite</name>
+    <page-reporting-siemlite>
+        <name>Reporting: SIEM Lite</name>
         <patterns>
             <pattern>ui/siemlite/*</pattern>
             <pattern>api/siemlite/*</pattern>
         </patterns>
-    </page-services-siemlite>
+    </page-reporting-siemlite>
 </acl>

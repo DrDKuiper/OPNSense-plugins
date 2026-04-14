@@ -1,12 +1,15 @@
 <?xml version="1.0"?>
 <menu>
-    <Services>
-        <SIEMLite VisibleName="SIEM" cssClass="fa fa-shield" order="5">
+    <Reporting>
+        <SIEMLite VisibleName="SIEM-Lite" cssClass="fa fa-shield" order="5">
             <Dashboard order="10" url="/ui/siemlite/dashboard" VisibleName="Dashboard"/>
             <Events order="20" url="/ui/siemlite/events" VisibleName="Events"/>
             <Alerts order="30" url="/ui/siemlite/alerts" VisibleName="Alerts"/>
-            <SigmaRules order="40" url="/ui/siemlite/sigmarules" VisibleName="Sigma Rules"/>
-            <Settings order="50" url="/ui/siemlite/settings" VisibleName="Settings"/>
+            <Traffic order="40" url="/ui/siemlite/traffic" VisibleName="Traffic Analysis"/>
+            <PacketInspector order="50" url="/ui/siemlite/packetinspector" VisibleName="Packet Inspector"/>
+            <Topology order="60" url="/ui/siemlite/topology" VisibleName="Network Map"/>
+            <SigmaRules order="70" url="/ui/siemlite/sigmarules" VisibleName="Sigma Rules"/>
+            <Settings order="80" url="/ui/siemlite/settings" VisibleName="Settings"/>
         </SIEMLite>
-    </Services>
+    </Reporting>
 </menu>

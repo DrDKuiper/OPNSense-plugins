@@ -5,33 +5,27 @@ namespace OPNsense\SIEMLite\Api;
 use OPNsense\Base\ApiControllerBase;
 use OPNsense\Core\Backend;
 
-class EventController extends ApiControllerBase
+class TrafficController extends ApiControllerBase
 {
-    /**
-     * Search events from the SIEM database
-     */
-    public function searchAction()
+    public function flowsAction()
     {
         $backend = new Backend();
         $itemsPerPage = intval($this->request->getPost('rowCount', 'int', 20));
         $currentPage = intval($this->request->getPost('current', 'int', 1));
         $offset = ($currentPage - 1) * $itemsPerPage;
-
         $searchPhrase = $this->request->getPost('searchPhrase', 'string', '');
-        $severity = $this->request->getPost('severity', 'string', '');
-        $source = $this->request->getPost('source', 'string', '');
         $timeRange = $this->request->getPost('timeRange', 'string', '24h');
+        $protocol = $this->request->getPost('protocol', 'string', '');
 
         $params = json_encode(array(
             'offset' => $offset,
             'limit' => $itemsPerPage,
             'search' => $searchPhrase,
-            'severity' => $severity,
-            'source' => $source,
-            'time_range' => $timeRange
+            'time_range' => $timeRange,
+            'protocol' => $protocol
         ));
 
-        $response = $backend->configdpRun("siemlite query-events", array(escapeshellarg($params)));
+        $response = $backend->configdpRun("siemlite traffic-flows", array(escapeshellarg($params)));
         $data = json_decode($response, true);
 
         if (!is_array($data)) {
@@ -46,13 +40,20 @@ class EventController extends ApiControllerBase
         );
     }
 
-    /**
-     * Get event details by ID
-     */
-    public function getAction($eventId)
+    public function statsAction()
     {
         $backend = new Backend();
-        $response = $backend->configdpRun("siemlite get-event", array(escapeshellarg($eventId)));
+        $timeRange = $this->request->get('timeRange', 'string', '24h');
+        $response = $backend->configdpRun("siemlite traffic-stats", array(escapeshellarg($timeRange)));
+        $data = json_decode($response, true);
+        return is_array($data) ? $data : array();
+    }
+
+    public function topportsAction()
+    {
+        $backend = new Backend();
+        $timeRange = $this->request->get('timeRange', 'string', '24h');
+        $response = $backend->configdpRun("siemlite traffic-ports", array(escapeshellarg($timeRange)));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array();
     }
