@@ -10,7 +10,7 @@ name="siemlite"
 rcvar="siemlite_enable"
 pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
-command_args="-f -P ${pidfile} /usr/local/bin/python3 /usr/local/opnsense/scripts/OPNsense/SIEMLite/siemlite_engine.py"
+command_args="-p ${pidfile} -S -T siemlite /usr/local/bin/python3 -u /usr/local/opnsense/scripts/OPNsense/SIEMLite/siemlite_engine.py"
 
 start_precmd="siemlite_prestart"
 stop_postcmd="siemlite_poststop"

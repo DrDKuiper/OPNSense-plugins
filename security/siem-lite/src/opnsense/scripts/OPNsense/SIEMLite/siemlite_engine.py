@@ -654,10 +654,6 @@ def run_daemon():
     conn = init_db()
     config = load_config()
 
-    # Write PID
-    with open(PID_FILE, 'w') as f:
-        f.write(str(os.getpid()))
-
     running = True
     def handle_signal(signum, frame):
         nonlocal running
@@ -708,8 +704,6 @@ def run_daemon():
             time.sleep(5)
 
     conn.close()
-    if os.path.exists(PID_FILE):
-        os.unlink(PID_FILE)
     log.info("SIEM-Lite engine stopped")
 
 
