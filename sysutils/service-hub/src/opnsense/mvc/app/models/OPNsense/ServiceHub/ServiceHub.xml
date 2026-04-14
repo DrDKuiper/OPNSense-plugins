@@ -15,6 +15,11 @@
                 <Default>["VPN &amp; Tunneling","Network &amp; Proxy","Security","Monitoring","DNS &amp; DHCP","Mail","Backup","System","Other"]</Default>
                 <MaximumLength>4096</MaximumLength>
             </categories>
+            <!-- Whether hub-only mode is active (hides Services menu items via JS) -->
+            <hubOnly type="TextField">
+                <Default>0</Default>
+                <MaximumLength>1</MaximumLength>
+            </hubOnly>
             <!-- Theme name saved before hide-menu was activated, used to restore on disable -->
             <previousTheme type="TextField">
                 <Default>opnsense</Default>

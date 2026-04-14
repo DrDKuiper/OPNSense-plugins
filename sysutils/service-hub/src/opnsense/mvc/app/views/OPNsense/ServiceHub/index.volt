@@ -131,6 +131,18 @@ $(document).ready(function () {
     // ========================================================
     // Hub-only fallback (sidebar hide without theme switch)
     // ========================================================
+    //
+    // Real OPNsense sidebar structure (no <li> elements!):
+    //
+    //   <div id="Services" class="collapse">
+    //     <a href="#Services_Apcupsd" class="list-group-item" data-toggle="collapse">Apcupsd</a>
+    //     <div class="collapse" id="Services_Apcupsd">
+    //       <a href="/ui/apcupsd" class="list-group-item menu-level-3-item">Settings</a>
+    //     </div>
+    //     <a href="/ui/lldpd/general/index" class="list-group-item">LLDP</a>   <!-- leaf -->
+    //     <a href="/ui/servicehub" class="list-group-item active">Services Hub</a>
+    //   </div>
+    //
     function applyHubOnlyFallback(enable) {
         var styleId = 'servicehub-hubonly-style';
         var cls = 'hubonly-hidden-item';
@@ -148,69 +160,56 @@ $(document).ready(function () {
             return;
         }
 
-        $nav.find('a.' + cls + ', li.' + cls).removeClass(cls);
+        // Reset previous state
+        $nav.find('.' + cls).removeClass(cls);
         if (!enable) {
             return;
         }
 
         var marked = 0;
 
-        // OPNsense 25.x style menu tree from diagnostics:
-        // #navigation > #mainmenu > #Services
-        var $servicesRoot = $nav.find('#mainmenu > #Services').first();
-        if ($servicesRoot.length) {
-            $servicesRoot.find('a[href]').not('[href*="servicehub"]').each(function () {
-                $(this).addClass(cls);
-                $(this).closest('li').addClass(cls);
-            });
-            marked = $servicesRoot.find('a.' + cls).length;
+        // Primary: find <div id="Services"> inside sidebar
+        var $servicesDiv = $nav.find('div#Services').first();
+        if (!$servicesDiv.length) {
+            // Fallback: try broader selectors
+            $servicesDiv = $nav.find('#mainmenu #Services, [id="Services"]').first();
         }
 
-        var containerSelector = [
-            '#services',
-            '[data-section="Services"]',
-            '[data-category="Services"]',
-            'li[id*="services"]',
-            'ul[id*="services"]',
-            'div[id*="services"]'
-        ].join(',');
+        if ($servicesDiv.length) {
+            // 1) Hide group headers (anchors with data-toggle that expand sub-sections)
+            //    e.g. <a href="#Services_Apcupsd" data-toggle="collapse">
+            $servicesDiv.children('a[data-toggle="collapse"]').each(function () {
+                var $a = $(this);
+                var target = $a.attr('href') || '';  // e.g. "#Services_Apcupsd"
+                $a.addClass(cls);
+                marked++;
+                // Also hide the corresponding collapse div
+                if (target.charAt(0) === '#') {
+                    $servicesDiv.children('div' + target).addClass(cls);
+                }
+            });
 
+            // 2) Hide direct leaf links (no sub-section, no servicehub)
+            //    e.g. <a href="/ui/lldpd/general/index" class="list-group-item">
+            $servicesDiv.children('a.list-group-item').not('[data-toggle]').not('[href*="servicehub"]').each(function () {
+                $(this).addClass(cls);
+                marked++;
+            });
+        }
+
+        // Fallback for alternative sidebar layouts (li-based or other)
         if (marked === 0) {
             $nav.find('a[href*="servicehub"]').each(function () {
-                var $container = $(this).closest(containerSelector);
+                var $container = $(this).closest('#services, [data-section="Services"], [data-category="Services"], div[id*="services"], ul[id*="services"]');
                 if (!$container.length) {
                     return;
                 }
-
                 $container.find('a[href]').not('[href*="servicehub"]').each(function () {
-                    var href = $(this).attr('href') || '';
-                    if (href.indexOf('/ui/') === 0 || href.indexOf('.php') !== -1) {
-                        $(this).addClass(cls);
-                        $(this).closest('li').addClass(cls);
-                        marked++;
-                    }
+                    $(this).addClass(cls);
+                    $(this).closest('li, div.collapse').addClass(cls);
+                    marked++;
                 });
             });
-        }
-
-        // Last-resort fallback for unknown sidebar HTML variants.
-        if (marked === 0) {
-            $nav.find('a.list-group-item[href^="/ui/"]')
-                .not('[href*="servicehub"]')
-                .not('[href*="/ui/dashboard"]')
-                .not('[href*="/ui/firewall"]')
-                .not('[href*="/ui/interfaces"]')
-                .not('[href*="/ui/diagnostics"]')
-                .not('[href*="/ui/routing"]')
-                .not('[href*="/ui/reporting"]')
-                .not('[href*="/ui/ids"]')
-                .not('[href*="/ui/trafficshaper"]')
-                .not('[href*="/ui/captiveportal"]')
-                .not('[href*="/ui/certs"]')
-                .each(function () {
-                    $(this).addClass(cls);
-                    $(this).closest('li').addClass(cls);
-                });
         }
     }
 
@@ -537,19 +536,17 @@ $(document).ready(function () {
                 setPersistedHubOnly(enable);
                 applyHubOnlyFallback(hub.hideEnabled);
                 renderHub();
-                // Theme switch requires a full page reload to take effect
-                $('#hubContent').prepend(
-                    $('<div class="alert alert-info" style="margin-bottom:12px;"></div>')
+                // Brief feedback
+                $('#hubToolbar').prepend(
+                    $('<span class="text-success" style="margin-right:10px;font-size:13px;"></span>')
                         .append(
-                            $('<i class="fa fa-refresh" style="margin-right:6px;"></i>'),
+                            $('<i class="fa fa-check"></i>'),
                             document.createTextNode(
                                 enable
-                                ? 'Services menu collapsed. '
-                                : 'Services menu restored. '
-                            ),
-                            $('<a href="#" onclick="window.location.reload();return false;"></a>')
-                                .text('Reload page to apply.')
-                        )
+                                ? ' Services menu collapsed'
+                                : ' Services menu restored'
+                            )
+                        ).delay(3000).fadeOut(400, function () { $(this).remove(); })
                 );
             } else {
                 $btn.prop('disabled', false);

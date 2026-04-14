@@ -132,20 +132,19 @@ class ServiceController extends ApiControllerBase
     }
 
     /**
-     * Return whether the "collapse Services menu" overlay theme is active.
+     * Return whether hub-only mode is active.
      */
     public function getHideStatusAction()
     {
-        $cfg          = Config::getInstance()->object();
-        $currentTheme = trim((string)($cfg->system->theme ?? 'opnsense'));
+        $model = new ServiceHub();
+        $enabled = trim((string)$model->hub->hubOnly) === '1';
         return [
-            'hideEnabled'  => ($currentTheme === 'servicehub'),
-            'currentTheme' => $currentTheme,
+            'hideEnabled'  => $enabled,
         ];
     }
 
     /**
-     * Activate the servicehub theme overlay (hides other Services menu items).
+     * Activate hub-only mode (hides other Services menu items via JS).
      */
     public function enableHideAction()
     {
@@ -153,25 +152,29 @@ class ServiceController extends ApiControllerBase
             return ['result' => 'failed', 'message' => 'POST required'];
         }
 
-        $cfg          = Config::getInstance();
-        $conf         = $cfg->object();
-        $currentTheme = trim((string)($conf->system->theme ?? 'opnsense'));
+        $model = new ServiceHub();
+        $model->hub->hubOnly = '1';
+        $model->serializeToConfig();
 
-        // Persist the previous theme so we can restore it later
-        if ($currentTheme !== 'servicehub') {
-            $model = new ServiceHub();
-            $model->hub->previousTheme = $currentTheme;
-            $model->serializeToConfig();
+        // If theme was previously set to 'servicehub', restore the real theme
+        $cfg  = Config::getInstance();
+        $conf = $cfg->object();
+        $currentTheme = trim((string)($conf->system->theme ?? 'opnsense'));
+        if ($currentTheme === 'servicehub') {
+            $prevTheme = trim((string)$model->hub->previousTheme);
+            if ($prevTheme === '' || $prevTheme === 'servicehub') {
+                $prevTheme = 'opnsense';
+            }
+            $conf->system->theme = $prevTheme;
         }
 
-        $conf->system->theme = 'servicehub';
         $cfg->save();
 
         return ['result' => 'saved'];
     }
 
     /**
-     * Restore the previous theme, removing the Services menu overlay.
+     * Deactivate hub-only mode, restoring full Services menu.
      */
     public function disableHideAction()
     {
@@ -179,20 +182,24 @@ class ServiceController extends ApiControllerBase
             return ['result' => 'failed', 'message' => 'POST required'];
         }
 
-        $model        = new ServiceHub();
-        $prevTheme    = trim((string)$model->hub->previousTheme);
-        if ($prevTheme === '' || $prevTheme === 'servicehub') {
-            $prevTheme = 'opnsense';
-        }
+        $model = new ServiceHub();
+        $model->hub->hubOnly = '0';
+        $model->serializeToConfig();
 
+        // If theme was previously set to 'servicehub', restore the real theme
         $cfg  = Config::getInstance();
         $conf = $cfg->object();
-        $conf->system->theme = $prevTheme;
+        $currentTheme = trim((string)($conf->system->theme ?? 'opnsense'));
+        if ($currentTheme === 'servicehub') {
+            $prevTheme = trim((string)$model->hub->previousTheme);
+            if ($prevTheme === '' || $prevTheme === 'servicehub') {
+                $prevTheme = 'opnsense';
+            }
+            $conf->system->theme = $prevTheme;
+        }
 
-        $model->hub->previousTheme = '';
-        $model->serializeToConfig();
         $cfg->save();
 
-        return ['result' => 'saved', 'theme' => $prevTheme];
+        return ['result' => 'saved'];
     }
 }

@@ -1,0 +1,2262 @@
+<!doctype html>
+<html lang="en-US" class="no-js">
+  <head>
+
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="keywords" content="" />
+    <meta name="description" content="" />
+    <meta name="copyright" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Services Hub | Services | OPNsense.internal</title>
+    
+    <!-- Favicon -->
+    <link href="/ui/themes/opnsense-dark/build/images/favicon.png?v=6ad3a7b636775471" rel="shortcut icon">
+
+    <!-- css imports -->
+    <link href="/ui/themes/opnsense-dark/build/css/main.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/themes/opnsense-dark/build/css/bootstrap-select.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/themes/opnsense-dark/build/css/bootstrap-dialog.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/css/tabulator.min.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/themes/opnsense-dark/build/css/opnsense-bootgrid.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/css/opnsense-bootgrid-layout.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/assets/fontawesome/css/all.min.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/assets/fontawesome/css/v4-shims.min.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/themes/opnsense-dark/build/css/tokenize2.css?v=6ad3a7b636775471" rel="stylesheet">
+    <link href="/ui/themes/opnsense-dark/build/css/jquery.bootgrid.css?v=6ad3a7b636775471" rel="stylesheet">
+    
+    <!-- TODO: move to theme style -->
+    <style>
+      .menu-level-3-item {
+        font-size: 90%;
+        padding-left: 54px !important;
+      }
+      .typeahead {
+        overflow: hidden;
+      }
+    </style>
+
+    <!-- script imports -->
+    <script src="/ui/js/polyfills.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/jquery-3.5.1.min.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/tokenize2.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/tabulator.min.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/opnsense_bootgrid.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/bootstrap3-typeahead.min.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/opnsense.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/opnsense_theme.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/opnsense_ui.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/opnsense_status.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/bootstrap.min.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/bootstrap-select.min.js?v=6ad3a7b636775471"></script>
+    <script src="/ui/js/bootstrap-dialog.min.js?v=6ad3a7b636775471"></script>
+    
+    <script>
+            // setup default scripting after page loading.
+            $( document ).ready(function() {
+                // hook into jquery ajax requests to ensure csrf handling.
+                $.ajaxSetup({
+                    'beforeSend': function(xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", "sezwzMCRdxTkj_NPdwTwaA" );
+                    }
+                });
+                // propagate ajax error messages
+                $( document ).ajaxError(function( event, request ) {
+                    if (request.responseJSON != undefined && request.responseJSON.errorMessage != undefined) {
+                        BootstrapDialog.show({
+                            type: BootstrapDialog.TYPE_DANGER,
+                            title: request.responseJSON.errorTitle,
+                            message:request.responseJSON.errorMessage,
+                            buttons: [{
+                                label: 'Close',
+                                action: function(dialogItself){
+                                    dialogItself.close();
+                                }
+                            }]
+                        });
+                    }
+                });
+
+                // hide empty menu items
+                $('#mainmenu > div > .collapse').each(function () {
+                    // cleanup empty second level menu containers
+                    $(this).find("div.collapse").each(function () {
+                        if ($(this).children().length == 0) {
+                            $("#mainmenu").find('[href="#' + $(this).attr('id') + '"]').remove();
+                            $(this).remove();
+                        }
+                    });
+
+                    // cleanup empty first level menu items
+                    if ($(this).children().length == 0) {
+                        $("#mainmenu").find('[href="#' + $(this).attr('id') + '"]').remove();
+                    }
+                });
+                // hide submenu items
+                $('#mainmenu .list-group-item').click(function(){
+                    if($(this).attr('href').substring(0,1) == '#') {
+                        $('#mainmenu .list-group-item').each(function(){
+                            if ($(this).attr('aria-expanded') == 'true'  && $(this).data('parent') != '#mainmenu') {
+                                $("#"+$(this).attr('href').substring(1,999)).collapse('hide');
+                            }
+                        });
+                    }
+                });
+
+                initFormHelpUI();
+                initFormAdvancedUI();
+                addMultiSelectClearUI();
+                initGlobalOpenShortcuts();
+
+                updateSystemStatus();
+
+                // Register collapsible table headers
+                $('.table').on('click', 'thead', function(event) {
+                    let collapse = $(event.currentTarget).next();
+                    let id = collapse.attr('class');
+                    if (collapse != undefined && id !== undefined && id === "collapsible") {
+                        let icon = $('> tr > th > div > i', event.currentTarget);
+                        if (collapse.is(':hidden')) {
+                            collapse.toggle(0);
+                            collapse.css('display', '');
+                            icon.toggleClass("fa-angle-right fa-angle-down");
+                            return;
+                        }
+                        icon.toggleClass("fa-angle-down fa-angle-right");
+                        $('> tr > td', collapse).toggle(0);
+                    }
+                });
+
+                // hook in live menu search
+                $.ajax("/api/core/menu/search/", {
+                    type: 'get',
+                    cache: false,
+                    dataType: "json",
+                    data: {},
+                    error : function (jqXHR, textStatus, errorThrown) {
+                        console.log('menu.search : ' +errorThrown);
+                    },
+                    success: function (data) {
+                        var menusearch_items = [];
+                        $.each(data,function(idx, menu_item){
+                            if (menu_item.Url != "") {
+                                menusearch_items.push({
+                                    id:$('<div/>').html(menu_item.Url).text(),
+                                    name: $("<div/>").html(menu_item.breadcrumb).text()
+                                });
+                            }
+                        });
+                        $("#menu_search_box").typeahead({
+                            source: menusearch_items,
+                            matcher: function (item) {
+                                var ar = this.query.trim();
+                                if (ar == "") {
+                                    return false;
+                                }
+                                ar = ar.toLowerCase().split(/\s+/);
+                                if (ar.length == 0) {
+                                    return false;
+                                }
+                                var it = this.displayText(item).toLowerCase();
+                                for (var i = 0; i < ar.length; i++) {
+                                    if (it.indexOf(ar[i]) == -1) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            },
+                            afterSelect: function(item){
+                                // (re)load page
+                                if (window.location.href.split("#")[0].indexOf(item.id.split("#")[0]) > -1 ) {
+                                    // same url, different hash marker
+                                    window.location.href = item.id;
+                                    window.location.reload();
+                                } else {
+                                    window.location.href = item.id;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                // change search input size on focus() to fit results
+                $("#menu_search_box").focus(function(){
+                    $("#menu_search_box").css('width', '450px');
+                    $("#system_status").hide();
+                });
+                $("#menu_search_box").focusout(function(){
+                    $("#menu_search_box").css('width', '250px');
+                    $("#system_status").show();
+                });
+                // enable bootstrap tooltips
+                $('body').tooltip({
+                    selector: '[data-toggle="tooltip"]',
+                    container: 'body'
+                });
+
+                // fix menu scroll position on page load
+                $(".list-group-item.active").each(function(){
+                    var navbar_center = ($( window ).height() - $(".collapse.navbar-collapse").height())/2;
+                    $('html,aside').scrollTop(($(this).offset().top - navbar_center));
+                });
+                // prevent form submits on mvc pages
+                $("form").submit(function() {
+                    return false;
+                });
+
+                /* overwrite clipboard paste behavior and trim before paste */
+                $("input").on('paste', function(e) {
+                    let clipboard_data = e.originalEvent.clipboardData.getData("text/plain").trim();
+                    if (clipboard_data.length > 0) {
+                        e.preventDefault();
+                        document.execCommand('insertText', false, clipboard_data);
+                    }
+                });
+
+            });
+        </script>
+
+        <!-- theme JS -->
+        <script src="/ui/js/theme.js?v=6ad3a7b636775471"></script>
+  </head>
+  <body>
+  <header class="page-head">
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">
+                            <img class="brand-logo" src="/ui/themes/opnsense-dark/build/images/default-logo.svg?v=6ad3a7b636775471" height="30" alt="logo"/>
+                                        <img class="brand-icon" src="/ui/themes/opnsense-dark/build/images/icon-logo.svg?v=6ad3a7b636775471" height="30" alt="icon"/>
+                      </a>
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navigation">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <button class="toggle-sidebar" data-toggle="tooltip right" title="Toggle sidebar" style="display:none;"><i class="fa fa-chevron-left"></i></button>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li id="menu_messages">
+              <span class="navbar-text">root@OPNsense.internal</span>
+            </li>
+            <li>
+              <span class="navbar-text" style="margin-left: 0">
+                <i id="system_status" data-toggle="tooltip left" title="Show system status" style="cursor:pointer" class="fa fa-circle text-muted"></i>
+              </span>
+            </li>
+            <li>
+              <form class="navbar-form" role="search">
+                <div class="input-group">
+                  <div class="input-group-addon"><i class="fa fa-search"></i></div>
+                  <input type="text" style="width: 250px;" class="form-control" tabindex="1" data-provide="typeahead" id="menu_search_box" autocomplete="off">
+                </div>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="page-content col-sm-9 col-sm-push-3 col-lg-10 col-lg-push-2">
+      <!-- menu system -->
+      <aside id="navigation" class="page-side col-xs-12 col-sm-3 col-lg-2 hidden-xs">
+    <div class="row">
+        <nav class="page-side-nav">
+            <div id="mainmenu" class="panel" style="border:0px">
+                <div class="panel list-group" style="border:0px">
+                                                                        <a href="#Lobby" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-laptop __iconspacer"></span><span style="word-break: keep-all">Lobby</span>
+                            </a>
+                            <div class="collapse  " id="Lobby">
+                                                                                                            <a href="/ui/core/dashboard" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Dashboard</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-dashboard fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/core/license" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">License</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-balance-scale fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/system_usermanager_passwordmg.php" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Password</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-key fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/index.php?logout" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Logout</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-sign-out fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                </div>
+                                                                                                <a href="#Reporting" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-area-chart __iconspacer"></span><span style="word-break: keep-all">Reporting</span>
+                            </a>
+                            <div class="collapse  " id="Reporting">
+                                                                                                            <a href="/ui/diagnostics/systemhealth" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Health</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-heartbeat fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/diagnostics/networkinsight" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Insight</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-binoculars fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/diagnostics/netflow" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">NetFlow</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-rss fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Reporting_TopologyMap" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Reporting">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Topology Map</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-sitemap"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Reporting_TopologyMap">
+                                                                                         <a href="/ui/topologymap" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/reporting_settings.php" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Settings</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-cog fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/diagnostics/traffic" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Traffic</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-line-chart fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/unbound/overview" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Unbound DNS</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-bar-chart fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                </div>
+                                                                                                <a href="#System" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-server __iconspacer"></span><span style="word-break: keep-all">System</span>
+                            </a>
+                            <div class="collapse  " id="System">
+                                                                                                        
+                                        <a href="#System_Access" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Access</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-users fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_Access">
+                                                                                         <a href="/ui/auth/user" class="list-group-item menu-level-3-item ">Users</a>
+                                                                                          <a href="/ui/auth/group" class="list-group-item menu-level-3-item ">Groups</a>
+                                                                                          <a href="/ui/auth/priv" class="list-group-item menu-level-3-item ">Privileges</a>
+                                                                                          <a href="/system_authservers.php" class="list-group-item menu-level-3-item ">Servers</a>
+                                                                                          <a href="/diag_authentication.php" class="list-group-item menu-level-3-item ">Tester</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#System_Configuration" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Configuration</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-history fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_Configuration">
+                                                                                         <a href="/diag_backup.php" class="list-group-item menu-level-3-item ">Backups</a>
+                                                                                          <a href="/ui/core/defaults" class="list-group-item menu-level-3-item ">Defaults</a>
+                                                                                          <a href="/ui/core/backup/history/this" class="list-group-item menu-level-3-item ">History</a>
+                                                                                          <a href="/ui/core/initial_setup" class="list-group-item menu-level-3-item ">Wizard</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#System_Firmware" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Firmware</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-building-o fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_Firmware">
+                                                                                         <a href="/ui/core/firmware#status" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                          <a href="/ui/core/firmware#settings" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                          <a href="/ui/core/firmware#changelog" class="list-group-item menu-level-3-item ">Changelog</a>
+                                                                                          <a href="/ui/core/firmware#updates" class="list-group-item menu-level-3-item ">Updates</a>
+                                                                                          <a href="/ui/core/firmware#plugins" class="list-group-item menu-level-3-item ">Plugins</a>
+                                                                                          <a href="/ui/core/firmware#packages" class="list-group-item menu-level-3-item ">Packages</a>
+                                                                                          <a href="/crash_reporter.php" class="list-group-item menu-level-3-item ">Reporter</a>
+                                                                                          <a href="/ui/diagnostics/log/core/pkg" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#System_Gateways" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Gateways</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-location-arrow fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_Gateways">
+                                                                                         <a href="/ui/routing/configuration" class="list-group-item menu-level-3-item ">Configuration</a>
+                                                                                          <a href="/system_gateway_groups.php" class="list-group-item menu-level-3-item ">Group</a>
+                                                                                          <a href="/ui/diagnostics/log/core/gateways" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#System_HighAvailability" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">High Availability</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-refresh fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_HighAvailability">
+                                                                                         <a href="/ui/core/hasync" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                          <a href="/ui/core/hasync_status" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#System_Routes" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Routes</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-map-signs fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_Routes">
+                                                                                         <a href="/ui/routes" class="list-group-item menu-level-3-item ">Configuration</a>
+                                                                                          <a href="/ui/diagnostics/interface/routes" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                          <a href="/ui/diagnostics/log/core/routing" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#System_Settings" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Settings</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-cogs fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_Settings">
+                                                                                         <a href="/system_advanced_admin.php" class="list-group-item menu-level-3-item ">Administration</a>
+                                                                                          <a href="/ui/cron" class="list-group-item menu-level-3-item ">Cron</a>
+                                                                                          <a href="/system_general.php" class="list-group-item menu-level-3-item ">General</a>
+                                                                                          <a href="/ui/syslog" class="list-group-item menu-level-3-item ">Logging</a>
+                                                                                          <a href="/system_advanced_misc.php" class="list-group-item menu-level-3-item ">Miscellaneous</a>
+                                                                                          <a href="/ui/core/tunables" class="list-group-item menu-level-3-item ">Tunables</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/ui/core/snapshots" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Snapshots</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-hdd-o fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#System_Trust" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Trust</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-certificate fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_Trust">
+                                                                                         <a href="/ui/trust/ca" class="list-group-item menu-level-3-item ">Authorities</a>
+                                                                                          <a href="/ui/trust/cert" class="list-group-item menu-level-3-item ">Certificates</a>
+                                                                                          <a href="/ui/trust/crl" class="list-group-item menu-level-3-item ">Revocation</a>
+                                                                                          <a href="/ui/trust/settings" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#System_LogFiles" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Log Files</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-eye fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_LogFiles">
+                                                                                         <a href="/ui/diagnostics/log/core/audit" class="list-group-item menu-level-3-item ">Audit</a>
+                                                                                          <a href="/ui/diagnostics/log/core/configd" class="list-group-item menu-level-3-item ">Backend</a>
+                                                                                          <a href="/ui/diagnostics/log/core/boot" class="list-group-item menu-level-3-item ">Boot</a>
+                                                                                          <a href="/ui/diagnostics/log/core/system" class="list-group-item menu-level-3-item ">General</a>
+                                                                                          <a href="/ui/diagnostics/log/core/lighttpd" class="list-group-item menu-level-3-item ">Web GUI</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#System_Diagnostics" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#System">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Diagnostics</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-medkit fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="System_Diagnostics">
+                                                                                         <a href="/ui/diagnostics/activity" class="list-group-item menu-level-3-item ">Activity</a>
+                                                                                          <a href="/ui/core/service" class="list-group-item menu-level-3-item ">Services</a>
+                                                                                          <a href="/ui/diagnostics/system/memory" class="list-group-item menu-level-3-item ">Statistics</a>
+                                                                                     </div>
+                                                                                                </div>
+                                                                                                <a href="#Interfaces" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-sitemap __iconspacer"></span><span style="word-break: keep-all">Interfaces</span>
+                            </a>
+                            <div class="collapse  " id="Interfaces">
+                                                                                                            <a href="/interfaces.php?if=lan" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">[LAN]</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-sitemap"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/interfaces.php?if=wan" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">[WAN]</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-sitemap"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/interfaces_assign.php" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Assignments</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-pencil fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Interfaces_Devices" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Interfaces">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Devices</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-archive fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Interfaces_Devices">
+                                                                                         <a href="/ui/interfaces/bridge" class="list-group-item menu-level-3-item ">Bridge</a>
+                                                                                          <a href="/ui/interfaces/gif" class="list-group-item menu-level-3-item ">GIF</a>
+                                                                                          <a href="/ui/interfaces/gre" class="list-group-item menu-level-3-item ">GRE</a>
+                                                                                          <a href="/ui/interfaces/lagg" class="list-group-item menu-level-3-item ">LAGG</a>
+                                                                                          <a href="/ui/interfaces/loopback" class="list-group-item menu-level-3-item ">Loopback</a>
+                                                                                          <a href="/interfaces_ppps.php" class="list-group-item menu-level-3-item ">Point-to-Point</a>
+                                                                                          <a href="/ui/interfaces/vlan" class="list-group-item menu-level-3-item ">VLAN</a>
+                                                                                          <a href="/ui/interfaces/vxlan" class="list-group-item menu-level-3-item ">VXLAN</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Interfaces_Neighbors" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Interfaces">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Neighbors</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-users fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Interfaces_Neighbors">
+                                                                                         <a href="/ui/hostdiscovery/settings" class="list-group-item menu-level-3-item ">Automatic Discovery</a>
+                                                                                          <a href="/ui/interfaces/neighbor" class="list-group-item menu-level-3-item ">Static Assignments</a>
+                                                                                          <a href="/ui/diagnostics/log/core/hostwatch" class="list-group-item menu-level-3-item ">Discovery log</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/ui/interfaces/overview" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Overview</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-tasks fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/interfaces/settings" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Settings</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-cogs fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Interfaces_VIP" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Interfaces">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Virtual IPs</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-clone fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Interfaces_VIP">
+                                                                                         <a href="/ui/interfaces/vip" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                          <a href="/ui/diagnostics/interface/vip" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Interfaces_Wireless" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Interfaces">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Wireless</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-wifi fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Interfaces_Wireless">
+                                                                                         <a href="/interfaces_wireless.php" class="list-group-item menu-level-3-item ">Devices</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Interfaces_Diagnostics" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Interfaces">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Diagnostics</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-medkit fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Interfaces_Diagnostics">
+                                                                                         <a href="/ui/diagnostics/interface/arp" class="list-group-item menu-level-3-item ">ARP Table</a>
+                                                                                          <a href="/ui/diagnostics/dns_diagnostics" class="list-group-item menu-level-3-item ">DNS Lookup</a>
+                                                                                          <a href="/ui/diagnostics/interface/ndp" class="list-group-item menu-level-3-item ">NDP Table</a>
+                                                                                          <a href="/ui/diagnostics/interface/netstat" class="list-group-item menu-level-3-item ">Netstat</a>
+                                                                                          <a href="/ui/diagnostics/packet_capture" class="list-group-item menu-level-3-item ">Packet Capture</a>
+                                                                                          <a href="/ui/diagnostics/ping" class="list-group-item menu-level-3-item ">Ping</a>
+                                                                                          <a href="/ui/realtekre" class="list-group-item menu-level-3-item ">Realtek RE</a>
+                                                                                          <a href="/ui/diagnostics/portprobe" class="list-group-item menu-level-3-item ">Port Probe</a>
+                                                                                          <a href="/ui/diagnostics/traceroute" class="list-group-item menu-level-3-item ">Trace Route</a>
+                                                                                     </div>
+                                                                                                </div>
+                                                                                                <a href="#Firewall" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-fire __iconspacer"></span><span style="word-break: keep-all">Firewall</span>
+                            </a>
+                            <div class="collapse  " id="Firewall">
+                                                                                                            <a href="/ui/firewall/alias" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Aliases</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-list-alt fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/firewall/category" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Categories</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-tags fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/firewall/group" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Groups</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-sitemap fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Firewall_NAT" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Firewall">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">NAT</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-exchange fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Firewall_NAT">
+                                                                                         <a href="/ui/firewall/source_nat/" class="list-group-item menu-level-3-item ">Source NAT</a>
+                                                                                          <a href="/ui/firewall/d_nat/" class="list-group-item menu-level-3-item ">Destination NAT</a>
+                                                                                          <a href="/ui/firewall/one_to_one/" class="list-group-item menu-level-3-item ">One-to-One NAT</a>
+                                                                                          <a href="/firewall_nat_out.php" class="list-group-item menu-level-3-item ">Outbound</a>
+                                                                                          <a href="/ui/firewall/npt/" class="list-group-item menu-level-3-item ">NPTv6</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/ui/firewall/filter/" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Rules [new]</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-check fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Firewall_Rules" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Firewall">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Rules</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-check fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Firewall_Rules">
+                                                                                         <a href="/ui/firewall/migration" class="list-group-item menu-level-3-item "><i class='fa fa-fw fa-gears'> </i> Migration assistant</a>
+                                                                                          <a href="/firewall_rules.php?if=FloatingRules" class="list-group-item menu-level-3-item ">Floating</a>
+                                                                                          <a href="/firewall_rules.php?if=lan" class="list-group-item menu-level-3-item ">LAN</a>
+                                                                                          <a href="/firewall_rules.php?if=wan" class="list-group-item menu-level-3-item ">WAN</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Firewall_Shaper" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Firewall">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Shaper</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-filter fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Firewall_Shaper">
+                                                                                         <a href="/ui/trafficshaper#pipes" class="list-group-item menu-level-3-item ">Pipes</a>
+                                                                                          <a href="/ui/trafficshaper#queues" class="list-group-item menu-level-3-item ">Queues</a>
+                                                                                          <a href="/ui/trafficshaper#rules" class="list-group-item menu-level-3-item ">Rules</a>
+                                                                                          <a href="/ui/trafficshaper/service/statistics" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Firewall_Settings" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Firewall">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Settings</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-cogs fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Firewall_Settings">
+                                                                                         <a href="/system_advanced_firewall.php" class="list-group-item menu-level-3-item ">Advanced</a>
+                                                                                          <a href="/firewall_scrub.php" class="list-group-item menu-level-3-item ">Normalization</a>
+                                                                                          <a href="/firewall_schedule.php" class="list-group-item menu-level-3-item ">Schedules</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Firewall_LogFiles" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Firewall">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Log Files</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-eye fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Firewall_LogFiles">
+                                                                                         <a href="/ui/diagnostics/log/core/firewall" class="list-group-item menu-level-3-item ">General</a>
+                                                                                          <a href="/ui/diagnostics/firewall/log" class="list-group-item menu-level-3-item ">Live View</a>
+                                                                                          <a href="/ui/diagnostics/firewall/stats" class="list-group-item menu-level-3-item ">Overview</a>
+                                                                                          <a href="/ui/diagnostics/log/core/filter" class="list-group-item menu-level-3-item ">Plain View</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Firewall_Diagnostics" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Firewall">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Diagnostics</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-medkit fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Firewall_Diagnostics">
+                                                                                         <a href="/ui/firewall/alias_util/" class="list-group-item menu-level-3-item ">Aliases</a>
+                                                                                          <a href="/ui/diagnostics/firewall/pf_top" class="list-group-item menu-level-3-item ">Sessions</a>
+                                                                                          <a href="/ui/diagnostics/firewall/states" class="list-group-item menu-level-3-item ">States</a>
+                                                                                          <a href="/ui/diagnostics/firewall/statistics" class="list-group-item menu-level-3-item ">Statistics</a>
+                                                                                     </div>
+                                                                                                </div>
+                                                                                                <a href="#VPN" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-globe __iconspacer"></span><span style="word-break: keep-all">VPN</span>
+                            </a>
+                            <div class="collapse  " id="VPN">
+                                                                                                        
+                                        <a href="#VPN_IPsec" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#VPN">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">IPsec</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-lock fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="VPN_IPsec">
+                                                                                         <a href="/ui/ipsec/connections" class="list-group-item menu-level-3-item ">Connections</a>
+                                                                                          <a href="/ui/ipsec/pre_shared_keys" class="list-group-item menu-level-3-item ">Pre-Shared Keys</a>
+                                                                                          <a href="/ui/ipsec/key_pairs" class="list-group-item menu-level-3-item ">Key Pairs</a>
+                                                                                          <a href="/ui/ipsec/connections/settings" class="list-group-item menu-level-3-item ">Mobile & Advanced Settings</a>
+                                                                                          <a href="/ui/ipsec/sessions" class="list-group-item menu-level-3-item ">Status Overview</a>
+                                                                                          <a href="/ui/ipsec/leases" class="list-group-item menu-level-3-item ">Lease Status</a>
+                                                                                          <a href="/ui/ipsec/sad" class="list-group-item menu-level-3-item ">Security Association Database</a>
+                                                                                          <a href="/ui/ipsec/spd" class="list-group-item menu-level-3-item ">Security Policy Database</a>
+                                                                                          <a href="/ui/ipsec/vti" class="list-group-item menu-level-3-item ">Virtual Tunnel Interfaces</a>
+                                                                                          <a href="/ui/diagnostics/log/core/ipsec" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#VPN_OpenVPN" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#VPN">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">OpenVPN</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-lock fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="VPN_OpenVPN">
+                                                                                         <a href="/ui/openvpn/instances" class="list-group-item menu-level-3-item ">Instances</a>
+                                                                                          <a href="/ui/openvpn/client_overwrites" class="list-group-item menu-level-3-item ">Client Specific Overrides</a>
+                                                                                          <a href="/ui/openvpn/export" class="list-group-item menu-level-3-item ">Client Export</a>
+                                                                                          <a href="/ui/openvpn/status" class="list-group-item menu-level-3-item ">Connection Status</a>
+                                                                                          <a href="/ui/diagnostics/log/core/openvpn" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#VPN_WireGuard" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#VPN">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">WireGuard</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-lock fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="VPN_WireGuard">
+                                                                                         <a href="/ui/wireguard/general#instances" class="list-group-item menu-level-3-item ">Instances</a>
+                                                                                          <a href="/ui/wireguard/general#peers" class="list-group-item menu-level-3-item ">Peers</a>
+                                                                                          <a href="/ui/wireguard/general#configbuilder" class="list-group-item menu-level-3-item ">Peer generator</a>
+                                                                                          <a href="/ui/wireguard/diagnostics/" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                          <a href="/ui/diagnostics/log/core/wireguard" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                </div>
+                                                                                                <a href="#Services" class="list-group-item   active-menu-title " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-cog __iconspacer"></span><span style="word-break: keep-all">Services</span>
+                            </a>
+                            <div class="collapse   active-menu in " id="Services">
+                                                                                                        
+                                        <a href="#Services_Apcupsd" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Apcupsd</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-battery-full fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_Apcupsd">
+                                                                                         <a href="/ui/apcupsd" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                          <a href="/ui/apcupsd/status" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                          <a href="/ui/diagnostics/log/core/apcupsd" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_C_ICAP" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">C-ICAP</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-ambulance"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_C_ICAP">
+                                                                                         <a href="/ui/cicap/general/index" class="list-group-item menu-level-3-item ">Configuration</a>
+                                                                                          <a href="/ui/diagnostics/log/core/cicap" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_CaptivePortal" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Captive Portal</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-paper-plane-o fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_CaptivePortal">
+                                                                                         <a href="/ui/captiveportal" class="list-group-item menu-level-3-item ">Administration</a>
+                                                                                          <a href="/ui/captiveportal/session" class="list-group-item menu-level-3-item ">Sessions</a>
+                                                                                          <a href="/ui/captiveportal/voucher" class="list-group-item menu-level-3-item ">Vouchers</a>
+                                                                                          <a href="/ui/diagnostics/log/core/portalauth" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_ClamAV" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">ClamAV</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-stethoscope"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_ClamAV">
+                                                                                         <a href="/ui/clamav/general/index" class="list-group-item menu-level-3-item ">Configuration</a>
+                                                                                          <a href="/ui/diagnostics/log/core/clamd" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_DHCRelay" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">DHCRelay</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-bullseye fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_DHCRelay">
+                                                                                         <a href="/ui/dhcrelay/relay" class="list-group-item menu-level-3-item ">Configuration</a>
+                                                                                          <a href="/ui/diagnostics/log/core/dhcrelay" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_Dnsmasq" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Dnsmasq DNS & DHCP</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-tags fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_Dnsmasq">
+                                                                                         <a href="/ui/dnsmasq/settings#general" class="list-group-item menu-level-3-item ">General</a>
+                                                                                          <a href="/ui/dnsmasq/settings#domains" class="list-group-item menu-level-3-item ">Domains</a>
+                                                                                          <a href="/ui/dnsmasq/settings#hosts" class="list-group-item menu-level-3-item ">Hosts</a>
+                                                                                          <a href="/ui/dnsmasq/settings#dhcpranges" class="list-group-item menu-level-3-item ">DHCP ranges</a>
+                                                                                          <a href="/ui/dnsmasq/settings#dhcpoptions" class="list-group-item menu-level-3-item ">DHCP options</a>
+                                                                                          <a href="/ui/dnsmasq/settings#dhcpboot" class="list-group-item menu-level-3-item ">DHCP boot</a>
+                                                                                          <a href="/ui/dnsmasq/settings#dhcptags" class="list-group-item menu-level-3-item ">DHCP tags</a>
+                                                                                          <a href="/ui/dnsmasq/leases" class="list-group-item menu-level-3-item ">Leases</a>
+                                                                                          <a href="/ui/diagnostics/log/core/dnsmasq" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_IDS" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Intrusion Detection</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-shield fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_IDS">
+                                                                                         <a href="/ui/ids" class="list-group-item menu-level-3-item ">Administration</a>
+                                                                                          <a href="/ui/ids/policy" class="list-group-item menu-level-3-item ">Policy</a>
+                                                                                          <a href="/ui/diagnostics/log/core/suricata" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_KeaDHCP" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Kea DHCP</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-bullseye fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_KeaDHCP">
+                                                                                         <a href="/ui/kea/dhcp/ctrl_agent" class="list-group-item menu-level-3-item ">Control Agent</a>
+                                                                                          <a href="/ui/kea/dhcp/ddns" class="list-group-item menu-level-3-item ">DDNS Agent</a>
+                                                                                          <a href="/ui/kea/dhcp/v4" class="list-group-item menu-level-3-item ">Kea DHCPv4</a>
+                                                                                          <a href="/ui/kea/dhcp/v6" class="list-group-item menu-level-3-item ">Kea DHCPv6</a>
+                                                                                          <a href="/ui/kea/dhcp/leases4" class="list-group-item menu-level-3-item ">Leases DHCPv4</a>
+                                                                                          <a href="/ui/kea/dhcp/leases6" class="list-group-item menu-level-3-item ">Leases DHCPv6</a>
+                                                                                          <a href="/ui/diagnostics/log/core/kea" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/ui/lldpd/general/index" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">LLDPd</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-binoculars"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Services_Maltrail" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Maltrail</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-eye-slash"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_Maltrail">
+                                                                                         <a href="/ui/maltrail/general/index" class="list-group-item menu-level-3-item ">General</a>
+                                                                                          <a href="/ui/maltrail/sensor/index" class="list-group-item menu-level-3-item ">Sensor</a>
+                                                                                          <a href="/ui/maltrail/server/index" class="list-group-item menu-level-3-item ">Server</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_Monit" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Monit</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-heartbeat fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_Monit">
+                                                                                         <a href="/ui/monit" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                          <a href="/ui/monit/status" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                          <a href="/ui/diagnostics/log/core/monit" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_NTP" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Network Time</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-clock-o fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_NTP">
+                                                                                         <a href="/services_ntpd.php" class="list-group-item menu-level-3-item ">General</a>
+                                                                                          <a href="/services_ntpd_gps.php" class="list-group-item menu-level-3-item ">GPS</a>
+                                                                                          <a href="/services_ntpd_pps.php" class="list-group-item menu-level-3-item ">PPS</a>
+                                                                                          <a href="/ui/ntpd/status" class="list-group-item menu-level-3-item ">Status</a>
+                                                                                          <a href="/ui/diagnostics/log/core/ntpd" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/ui/netsnmp/general/index" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Net-SNMP</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-database"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Services_Netdata" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Netdata</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-pie-chart"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_Netdata">
+                                                                                         <a href="/ui/netdata/general/index" class="list-group-item menu-level-3-item ">General</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/services_opendns.php" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">OpenDNS</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-tags fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Services_QemuGuestAgent" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">QEMU Guest Agent</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-cog fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_QemuGuestAgent">
+                                                                                         <a href="/ui/qemuguestagent" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                          <a href="/ui/diagnostics/log/core/qemu-ga" class="list-group-item menu-level-3-item ">Logs</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/ui/redis" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Redis</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-database fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/radvd/settings" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Router Advertisements</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-bullseye fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/servicehub" class="list-group-item  active ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Services Hub</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-th fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Services_SquidWebProxy" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Squid Web Proxy</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-bolt fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_SquidWebProxy">
+                                                                                         <a href="/ui/proxy" class="list-group-item menu-level-3-item ">Administration</a>
+                                                                                          <a href="/ui/proxy/acl" class="list-group-item menu-level-3-item ">Access control</a>
+                                                                                          <a href="/ui/diagnostics/log/squid/cache" class="list-group-item menu-level-3-item ">Cache Log</a>
+                                                                                          <a href="/ui/diagnostics/log/squid/access" class="list-group-item menu-level-3-item ">Access Log</a>
+                                                                                          <a href="/ui/diagnostics/log/squid/store" class="list-group-item menu-level-3-item ">Store Log</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_TelegramNotify" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Telegram Notify</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-paper-plane"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_TelegramNotify">
+                                                                                         <a href="/ui/telegramnotify" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                     </div>
+                                                                                                                                            
+                                        <a href="#Services_Unbound" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Unbound DNS</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-tags fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_Unbound">
+                                                                                         <a href="/ui/unbound/general" class="list-group-item menu-level-3-item ">General</a>
+                                                                                          <a href="/ui/unbound/overrides" class="list-group-item menu-level-3-item ">Overrides</a>
+                                                                                          <a href="/ui/unbound/advanced" class="list-group-item menu-level-3-item ">Advanced</a>
+                                                                                          <a href="/ui/unbound/acl" class="list-group-item menu-level-3-item ">Access Lists</a>
+                                                                                          <a href="/ui/unbound/dnsbl/index" class="list-group-item menu-level-3-item ">Blocklists</a>
+                                                                                          <a href="/ui/unbound/forward" class="list-group-item menu-level-3-item ">Query Forwarding</a>
+                                                                                          <a href="/ui/unbound/dot" class="list-group-item menu-level-3-item ">DNS over TLS</a>
+                                                                                          <a href="/ui/unbound/stats" class="list-group-item menu-level-3-item ">Statistics</a>
+                                                                                          <a href="/ui/diagnostics/log/core/resolver" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                                                                <a href="/ui/vnstat/general/index" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">VnStat</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-bar-chart"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/wol" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Wake on LAN</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-power-off fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                            
+                                        <a href="#Services_ZabbixAgent" class="list-group-item "
+                                            data-toggle="collapse" data-parent="#Services">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Zabbix Agent</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-certificate fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="collapse " id="Services_ZabbixAgent">
+                                                                                         <a href="/ui/zabbixagent" class="list-group-item menu-level-3-item ">Settings</a>
+                                                                                          <a href="/ui/diagnostics/log/zabbix/zabbix_agentd" class="list-group-item menu-level-3-item ">Log File</a>
+                                                                                     </div>
+                                                                                                </div>
+                                                                                                <a href="#Zenarmor" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-binoculars __iconspacer"></span><span style="word-break: keep-all">Zenarmor</span>
+                            </a>
+                            <div class="collapse  " id="Zenarmor">
+                                                                                                            <a href="/ui/zenarmor/#/0" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Dashboard</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-dashboard fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/zenarmor/#/0/devices" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Devices</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-globe fa-laptop"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/zenarmor/#/0/reports" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Reports</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-pie-chart fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/zenarmor/#/0/live-sessions" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Live Sessions</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-exchange fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/zenarmor/#/0/activity-explorer" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Activity Explorer</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-globe fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/zenarmor/#/0/policies" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Policies</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-plane fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/zenarmor/#/0/settings" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Settings</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-cog fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/zenarmor/#/notifications" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Notifications</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-bell fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                </div>
+                                                                                                <a href="#Power" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-plug __iconspacer"></span><span style="word-break: keep-all">Power</span>
+                            </a>
+                            <div class="collapse  " id="Power">
+                                                                                                            <a href="/ui/core/reboot" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Reboot</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-repeat fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="/ui/core/halt" class="list-group-item ">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Power Off</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-power-off fa-fw"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                </div>
+                                                                                                <a href="#Help" class="list-group-item " data-toggle="collapse" data-parent="#mainmenu">
+                                <span class="fa fa-support __iconspacer"></span><span style="word-break: keep-all">Help</span>
+                            </a>
+                            <div class="collapse  " id="Help">
+                                                                                                            <a href="https://docs.opnsense.org/" target="_blank" rel="noopener noreferrer" class="list-group-item "
+                                            aria-expanded="false">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Documentation</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-book"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="https://forum.opnsense.org/" target="_blank" rel="noopener noreferrer" class="list-group-item "
+                                            aria-expanded="false">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">User Forum</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-ticket"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                                                                <a href="https://opnsense.org/support-overview/commercial-support/" target="_blank" rel="noopener noreferrer" class="list-group-item "
+                                            aria-expanded="false">
+                                            <div style="display: table;width: 100%;">
+                                                <div style="display: table-row">
+                                                    <div style="display: table-cell">Commercial Support</div>
+                                                    <div style="display: table-cell; text-align:right; vertical-align:middle;">
+                                                        <span class="fa fa-phone"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                                                                                </div>
+                                                            </div>
+            </div>
+        </nav>
+    </div>
+</aside>
+      <div class="row">
+        <!-- page header -->
+        <header class="page-content-head">
+          <div class="container-fluid">
+            <ul class="list-inline">
+              <li><h1>Services: Services Hub</h1></li>
+              <li class="btn-group-container" id="service_status_container"></li>
+            </ul>
+          </div>
+        </header>
+
+        <!-- page content -->
+        <section class="page-content-main">
+          <div class="container-fluid">
+            <div class="row">
+                <!-- notification banner dynamically inserted here (opnsense_status.js) -->
+
+                <section class="col-xs-12">
+                    <div id="messageregion"></div>
+                        <script>
+$(document).ready(function () {
+
+    // ========================================================
+    // State
+    // ========================================================
+    var hub = {
+        items:       [],
+        assignments: {},  // itemId -> categoryName
+        categories:  ['VPN & Tunneling', 'Network & Proxy', 'Security',
+                      'Monitoring', 'DNS & DHCP', 'Mail', 'Backup', 'System', 'Other'],
+        editMode:    false,
+        hideEnabled: false   // true when servicehub theme overlay is active
+    };
+
+    var HUB_ONLY_STORAGE_KEY = 'servicehub.hubOnly';
+    var hubOnlyObserver = null;
+
+    // Keyword → default category mapping (matches against plugin + name + url + section)
+    var AUTO_MAP = [
+        ['VPN & Tunneling',   ['openvpn', 'strongswan', 'tinc', 'zerotier', 'openconnect',
+                               'wireguard', 'ipsec', 'vpn', 'tunnel']],
+        ['Network & Proxy',   ['haproxy', 'relayd', 'nginx', 'squid', 'icap', 'proxy',
+                               'siprox', 'sslh', 'tayga', 'upnp', 'frr', 'freeradius',
+                               'radsec', 'shadowsocks', 'chrony', 'mdns', 'ndp', 'ndproxy',
+                               'realtek', 'turnserver', 'udpbroadcast', 'wol', 'natpmp',
+                               'ntpd', 'google-cloud', 'caddy']],
+        ['Security',          ['clamav', 'crowdsec', 'acme', 'maltrail', 'stunnel', 'wazuh',
+                               'netbird', 'tailscale', 'intrusion', 'snort', 'etpro',
+                               'qfeeds', 'tor', 'openconnect', 'etopen', 'ptopen', 'snortvrt']],
+        ['Monitoring',        ['collectd', 'telegraf', 'ntopng', 'zabbix', 'netdata',
+                               'node_exporter', 'lldpd', 'vnstat', 'iperf', 'topology',
+                               'telegram', 'munin', 'nrpe', 'netsnmp', 'net-snmp',
+                               'topology-map']],
+        ['DNS & DHCP',        ['bind', 'dnscrypt', 'ddclient', 'rfc2136', 'dhcp', 'isc-dhcp']],
+        ['Mail',              ['postfix', 'rspamd', 'mail']],
+        ['Backup',            ['backup', 'gdrive', 'nextcloud', 'sftp-backup', 'git-backup']],
+        ['System',            ['puppet', 'smart', 'dmidecode', 'cpu-microcode', 'hw-probe',
+                               'beats', 'apcupsd', 'nut', 'lcdproc', 'virtualbox', 'vmware',
+                               'xen', 'qemu', 'dec-hw', 'redis']]
+    ];
+
+    var CAT_ICONS = {
+        'VPN & Tunneling':   'fa fa-lock',
+        'Network & Proxy':   'fa fa-exchange',
+        'Security':          'fa fa-shield',
+        'Monitoring':        'fa fa-bar-chart',
+        'DNS & DHCP':        'fa fa-server',
+        'Mail':              'fa fa-envelope',
+        'Backup':            'fa fa-cloud-upload',
+        'System':            'fa fa-cog',
+        'Other':             'fa fa-plug'
+    };
+
+    var CAT_COLORS = {
+        'VPN & Tunneling':   '#5b7ebe',
+        'Network & Proxy':   '#3a9fbe',
+        'Security':          '#c0392b',
+        'Monitoring':        '#2980b9',
+        'DNS & DHCP':        '#27ae60',
+        'Mail':              '#8e44ad',
+        'Backup':            '#16a085',
+        'System':            '#7f8c8d',
+        'Other':             '#95a5a6'
+    };
+
+    // ========================================================
+    // Helpers
+    // ========================================================
+    function esc(s) {
+        return $('<div/>').text(s).html();
+    }
+
+    function autoCategory(item) {
+        var haystack = (item.plugin + ' ' + item.name + ' ' + item.url + ' ' + item.section).toLowerCase();
+        for (var i = 0; i < AUTO_MAP.length; i++) {
+            var keywords = AUTO_MAP[i][1];
+            for (var j = 0; j < keywords.length; j++) {
+                if (haystack.indexOf(keywords[j]) !== -1) {
+                    return AUTO_MAP[i][0];
+                }
+            }
+        }
+        return 'Other';
+    }
+
+    function getCategory(item) {
+        return hub.assignments[item.id] || autoCategory(item);
+    }
+
+    function catIcon(cat) {
+        return CAT_ICONS[cat] || 'fa fa-th-large';
+    }
+
+    function catColor(cat) {
+        return CAT_COLORS[cat] || '#95a5a6';
+    }
+
+    function getPersistedHubOnly() {
+        try {
+            return window.localStorage.getItem(HUB_ONLY_STORAGE_KEY) === '1';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function setPersistedHubOnly(enable) {
+        try {
+            window.localStorage.setItem(HUB_ONLY_STORAGE_KEY, enable ? '1' : '0');
+        } catch (e) {}
+    }
+
+    function ensureHubOnlyObserver() {
+        if (hubOnlyObserver || !window.MutationObserver) {
+            return;
+        }
+
+        var nav = document.getElementById('navigation');
+        if (!nav) {
+            return;
+        }
+
+        hubOnlyObserver = new MutationObserver(function () {
+            if (hub.hideEnabled) {
+                applyHubOnlyFallback(true);
+            }
+        });
+        hubOnlyObserver.observe(nav, { childList: true, subtree: true });
+    }
+
+    // ========================================================
+    // Hub-only fallback (sidebar hide without theme switch)
+    // ========================================================
+    function applyHubOnlyFallback(enable) {
+        var styleId = 'servicehub-hubonly-style';
+        var cls = 'hubonly-hidden-item';
+
+        if (!document.getElementById(styleId)) {
+            $('head').append(
+                $('<style id="' + styleId + '"></style>').text(
+                    '.' + cls + ' { display: none !important; }'
+                )
+            );
+        }
+
+        var $nav = $('#navigation');
+        if (!$nav.length) {
+            return;
+        }
+
+        $nav.find('a.' + cls + ', li.' + cls).removeClass(cls);
+        if (!enable) {
+            return;
+        }
+
+        var marked = 0;
+
+        // OPNsense 25.x style menu tree from diagnostics:
+        // #navigation > #mainmenu > #Services
+        var $servicesRoot = $nav.find('#mainmenu > #Services').first();
+        if ($servicesRoot.length) {
+            $servicesRoot.find('a[href]').not('[href*="servicehub"]').each(function () {
+                $(this).addClass(cls);
+                $(this).closest('li').addClass(cls);
+            });
+            marked = $servicesRoot.find('a.' + cls).length;
+        }
+
+        var containerSelector = [
+            '#services',
+            '[data-section="Services"]',
+            '[data-category="Services"]',
+            'li[id*="services"]',
+            'ul[id*="services"]',
+            'div[id*="services"]'
+        ].join(',');
+
+        if (marked === 0) {
+            $nav.find('a[href*="servicehub"]').each(function () {
+                var $container = $(this).closest(containerSelector);
+                if (!$container.length) {
+                    return;
+                }
+
+                $container.find('a[href]').not('[href*="servicehub"]').each(function () {
+                    var href = $(this).attr('href') || '';
+                    if (href.indexOf('/ui/') === 0 || href.indexOf('.php') !== -1) {
+                        $(this).addClass(cls);
+                        $(this).closest('li').addClass(cls);
+                        marked++;
+                    }
+                });
+            });
+        }
+
+        // Last-resort fallback for unknown sidebar HTML variants.
+        if (marked === 0) {
+            $nav.find('a.list-group-item[href^="/ui/"]')
+                .not('[href*="servicehub"]')
+                .not('[href*="/ui/dashboard"]')
+                .not('[href*="/ui/firewall"]')
+                .not('[href*="/ui/interfaces"]')
+                .not('[href*="/ui/diagnostics"]')
+                .not('[href*="/ui/routing"]')
+                .not('[href*="/ui/reporting"]')
+                .not('[href*="/ui/ids"]')
+                .not('[href*="/ui/trafficshaper"]')
+                .not('[href*="/ui/captiveportal"]')
+                .not('[href*="/ui/certs"]')
+                .each(function () {
+                    $(this).addClass(cls);
+                    $(this).closest('li').addClass(cls);
+                });
+        }
+    }
+
+    // ========================================================
+    // Hub view (card grid)
+    // ========================================================
+    function renderHub() {
+        var $c = $('#hubContent').empty();
+
+        // Group items by effective category
+        var grouped = {};
+        hub.categories.forEach(function (cat) { grouped[cat] = []; });
+
+        hub.items.forEach(function (item) {
+            var cat = getCategory(item);
+            if (!grouped.hasOwnProperty(cat)) {
+                if (hub.categories.indexOf(cat) === -1) {
+                    hub.categories.push(cat);
+                }
+                grouped[cat] = [];
+            }
+            grouped[cat].push(item);
+        });
+
+        var $row = $('<div class="row"></div>').css({margin: '0 -6px'});
+
+        hub.categories.forEach(function (cat) {
+            var items = (grouped[cat] || []).slice().sort(function (a, b) {
+                return a.name.localeCompare(b.name);
+            });
+
+            var accentColor = catColor(cat);
+
+            var $col = $('<div class="col-lg-3 col-md-4 col-sm-6 col-xs-12"></div>')
+                .css({padding: '6px'});
+
+            var $panel = $('<div class="panel panel-default"></div>')
+                .css({marginBottom: 0, minHeight: '80px', borderTop: '3px solid ' + accentColor});
+
+            // Panel heading
+            var $head = $('<div class="panel-heading"></div>').css({
+                padding: '8px 12px',
+                fontWeight: '600',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+            });
+            var $title = $('<span></span>');
+            $title.append(
+                $('<i></i>').addClass(catIcon(cat)).css({marginRight: '6px', color: accentColor}),
+                document.createTextNode(cat)
+            );
+            $head.append($title);
+            if (items.length > 0) {
+                $head.append(
+                    $('<span class="badge"></span>').css({
+                        background: accentColor,
+                        color: '#fff'
+                    }).text(items.length)
+                );
+            }
+
+            // Panel body
+            var $body = $('<div class="panel-body"></div>').css({padding: '6px 8px'});
+
+            if (items.length === 0) {
+                $body.append(
+                    $('<div></div>').css({
+                        color: '#bbb', fontSize: '12px', textAlign: 'center', padding: '12px 0'
+                    }).text('No plugins assigned')
+                );
+            } else {
+                items.forEach(function (item) {
+                    var $link = $('<a></a>')
+                        .attr('href', item.url)
+                        .css({
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '3px 6px',
+                            borderRadius: '3px',
+                            fontSize: '13px',
+                            color: 'inherit',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            textDecoration: 'none'
+                        })
+                        .hover(
+                            function () { $(this).css('background', 'rgba(0,0,0,0.06)'); },
+                            function () { $(this).css('background', ''); }
+                        );
+                    $link.append(
+                        $('<i></i>').addClass(item.icon || 'fa fa-plug').css({
+                            width: '16px', textAlign: 'center',
+                            marginRight: '6px', opacity: '0.65', flexShrink: 0
+                        }),
+                        $('<span></span>').text(item.name).css({
+                            overflow: 'hidden', textOverflow: 'ellipsis'
+                        })
+                    );
+                    $body.append($link);
+                });
+            }
+
+            $panel.append($head, $body);
+            $col.append($panel);
+            $row.append($col);
+        });
+
+        $c.append($row);
+
+        // Toolbar
+        var $hideBtn = hub.hideEnabled
+            ? $('<button id="hubToggleHideBtn" class="btn btn-warning btn-sm" style="margin-right:6px;" ' +
+                'title="Services menu is collapsed — click to restore all items"></button>')
+                .append($('<i class="fa fa-eye-slash" style="margin-right:4px;"></i>'),
+                        document.createTextNode('Hub only  \u25CF'))
+            : $('<button id="hubToggleHideBtn" class="btn btn-default btn-sm" style="margin-right:6px;" ' +
+                'title="Hide all other Services menu items, keeping only Services Hub"></button>')
+                .append($('<i class="fa fa-filter" style="margin-right:4px;"></i>'),
+                        document.createTextNode('Collapse Services menu'));
+
+        var $editBtn = $('<button id="hubEditBtn" class="btn btn-default btn-sm"></button>')
+            .append($('<i class="fa fa-pencil" style="margin-right:4px;"></i>'),
+                    document.createTextNode('Customize Categories'));
+
+        $('#hubToolbar').empty().append($hideBtn, $editBtn);
+    }
+
+    // ========================================================
+    // Customize / Edit view
+    // ========================================================
+    function renderCustomize() {
+        var $c = $('#hubContent').empty();
+
+        // ---- Category order editor ----
+        var $catBox = $('<div class="content-box" style="margin-bottom:16px;"></div>');
+        var $catMain = $('<div class="content-box-main"></div>').css({padding: '12px 16px'});
+        $catMain.append(
+            $('<h5 style="margin:0 0 10px;font-weight:600;"></h5>').text('Categories')
+        );
+
+        var $catList = $('<div id="hubCatList" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>');
+        hub.categories.forEach(function (cat) {
+            var $chip = $('<span class="label" style="font-size:13px;padding:5px 10px;cursor:default;"></span>')
+                .css({'background-color': catColor(cat), color: '#fff'})
+                .text(cat);
+            var $del = $('<i class="fa fa-times" style="margin-left:6px;cursor:pointer;opacity:0.8;"></i>');
+            $del.on('click', function () {
+                // Move items in this category to "Other" before removing
+                hub.items.forEach(function (item) {
+                    if (hub.assignments[item.id] === cat) {
+                        hub.assignments[item.id] = 'Other';
+                    }
+                });
+                var idx = hub.categories.indexOf(cat);
+                if (idx !== -1) hub.categories.splice(idx, 1);
+                renderCustomize();
+            });
+            $chip.append($del);
+            $catList.append($chip);
+        });
+
+        // Add-category input
+        var $addRow = $('<div style="display:flex;gap:6px;align-items:center;margin-top:8px;"></div>');
+        var $newInput = $('<input type="text" class="form-control input-sm" placeholder="New category name…" style="max-width:220px;">');
+        var $addBtn = $('<button class="btn btn-default btn-xs"><i class="fa fa-plus"></i> Add</button>');
+        $addBtn.on('click', function () {
+            var name = $.trim($newInput.val());
+            if (name && hub.categories.indexOf(name) === -1) {
+                hub.categories.push(name);
+                $newInput.val('');
+                renderCustomize();
+            }
+        });
+        $addRow.append($newInput, $addBtn);
+
+        $catMain.append($catList, $addRow);
+        $catBox.append($catMain);
+        $c.append($catBox);
+
+        // ---- Plugin assignment table ----
+        var $tableBox = $('<div class="content-box"></div>');
+        var $tableMain = $('<div class="content-box-main" style="padding:0;"></div>');
+
+        var $tbl = $('<table class="table table-striped table-condensed" style="margin:0;"></table>');
+        $tbl.append(
+            $('<thead><tr>' +
+              '<th style="width:50%">Plugin</th>' +
+              '<th style="width:20%">Menu Section</th>' +
+              '<th style="width:30%">Category</th>' +
+              '</tr></thead>')
+        );
+
+        var $tbody = $('<tbody></tbody>');
+        var sorted = hub.items.slice().sort(function (a, b) {
+            return a.name.localeCompare(b.name);
+        });
+
+        sorted.forEach(function (item) {
+            var $tr = $('<tr></tr>');
+
+            // Name cell
+            var $tdName = $('<td></td>');
+            $tdName.append(
+                $('<i></i>').addClass(item.icon || 'fa fa-plug').css({
+                    marginRight: '6px', opacity: 0.6, width: '14px', textAlign: 'center'
+                }),
+                $('<span></span>').text(item.name)
+            );
+
+            // Section cell
+            var $tdSection = $('<td style="color:#888;font-size:12px;vertical-align:middle;"></td>')
+                .text(item.section);
+
+            // Category dropdown cell
+            var $tdCat = $('<td style="vertical-align:middle;"></td>');
+            var $sel = $('<select class="form-control input-sm hub-assign-select"></select>')
+                .attr('data-id', item.id);
+
+            hub.categories.forEach(function (cat) {
+                var $opt = $('<option></option>').val(cat).text(cat);
+                if (getCategory(item) === cat) {
+                    $opt.prop('selected', true);
+                }
+                $sel.append($opt);
+            });
+
+            $tdCat.append($sel);
+            $tr.append($tdName, $tdSection, $tdCat);
+            $tbody.append($tr);
+        });
+
+        $tbl.append($tbody);
+        $tableMain.append($tbl);
+        $tableBox.append($tableMain);
+        $c.append($tableBox);
+
+        // Toolbar
+        var $hideBtn2 = hub.hideEnabled
+            ? $('<button id="hubToggleHideBtn" class="btn btn-warning btn-sm" style="margin-right:6px;" ' +
+                'title="Services menu is collapsed — click to restore all items"></button>')
+                .append($('<i class="fa fa-eye-slash" style="margin-right:4px;"></i>'),
+                        document.createTextNode('Hub only  \u25CF'))
+            : $('<button id="hubToggleHideBtn" class="btn btn-default btn-sm" style="margin-right:6px;" ' +
+                'title="Hide all other Services menu items, keeping only Services Hub"></button>')
+                .append($('<i class="fa fa-filter" style="margin-right:4px;"></i>'),
+                        document.createTextNode('Collapse Services menu'));
+
+        var $saveBtn = $('<button id="hubSaveBtn" class="btn btn-primary btn-sm" style="margin-right:4px;"></button>')
+            .append($('<i class="fa fa-floppy-o" style="margin-right:4px;"></i>'), document.createTextNode('Save'));
+        var $cancelBtn = $('<button id="hubCancelBtn" class="btn btn-default btn-sm"></button>')
+            .text('Cancel');
+
+        $('#hubToolbar').empty().append($hideBtn2, $saveBtn, $cancelBtn);
+    }
+
+    // ========================================================
+    // Event handlers
+    // ========================================================
+    $(document).on('click', '#hubEditBtn', function () {
+        hub.editMode = true;
+        renderCustomize();
+    });
+
+    $(document).on('click', '#hubSaveBtn', function () {
+        // Collect assignments from dropdowns
+        $('.hub-assign-select').each(function () {
+            hub.assignments[$(this).attr('data-id')] = $(this).val();
+        });
+
+        var $btn = $(this).prop('disabled', true).html(
+            '<i class="fa fa-spinner fa-spin"></i> Saving…'
+        );
+
+        ajaxCall('/api/servicehub/service/setSettings', {
+            assignments: JSON.stringify(hub.assignments),
+            categories:  JSON.stringify(hub.categories)
+        }, function (resp) {
+            $btn.prop('disabled', false);
+            if (resp && resp.result === 'saved') {
+                hub.editMode = false;
+                renderHub();
+                // Brief success flash on toolbar
+                $('#hubToolbar').prepend(
+                    $('<span class="text-success" style="margin-right:10px;font-size:13px;">' +
+                      '<i class="fa fa-check"></i> Saved' +
+                      '</span>').delay(2500).fadeOut(400, function () { $(this).remove(); })
+                );
+            }
+        });
+    });
+
+    $(document).on('click', '#hubCancelBtn', function () {
+        hub.editMode = false;
+        // Reload settings to discard unsaved category-list edits
+        $.ajax('/api/servicehub/service/getSettings', {
+            type: 'GET', cache: false,
+            success: function (cfg) {
+                try { hub.assignments = JSON.parse(cfg.assignments || '{}'); } catch (e) {}
+                try {
+                    var cats = JSON.parse(cfg.categories || '[]');
+                    if (cats.length) hub.categories = cats;
+                } catch (e) {}
+                renderHub();
+            }
+        });
+    });
+
+    // ---- Hide/show Services menu toggle ----
+    $(document).on('click', '#hubToggleHideBtn', function () {
+        var enable = !hub.hideEnabled;
+        var $btn = $(this).prop('disabled', true);
+        $btn.empty().append($('<i class="fa fa-spinner fa-spin"></i>'),
+                            document.createTextNode(' Applying\u2026'));
+
+        var url = enable ? '/api/servicehub/service/enableHide'
+                        : '/api/servicehub/service/disableHide';
+
+        ajaxCall(url, {}, function (resp) {
+            if (resp && resp.result === 'saved') {
+                hub.hideEnabled = enable;
+                setPersistedHubOnly(enable);
+                applyHubOnlyFallback(hub.hideEnabled);
+                renderHub();
+                // Theme switch requires a full page reload to take effect
+                $('#hubContent').prepend(
+                    $('<div class="alert alert-info" style="margin-bottom:12px;"></div>')
+                        .append(
+                            $('<i class="fa fa-refresh" style="margin-right:6px;"></i>'),
+                            document.createTextNode(
+                                enable
+                                ? 'Services menu collapsed. '
+                                : 'Services menu restored. '
+                            ),
+                            $('<a href="#" onclick="window.location.reload();return false;"></a>')
+                                .text('Reload page to apply.')
+                        )
+                );
+            } else {
+                $btn.prop('disabled', false);
+                renderHub();
+            }
+        });
+    });
+
+    // ========================================================
+    // Initial data load
+    // ========================================================
+    $('#hubContent').html(
+        '<div style="text-align:center;padding:60px;color:#aaa;">' +
+        '<i class="fa fa-spinner fa-spin fa-2x"></i><br><br>Loading plugins…' +
+        '</div>'
+    );
+
+    // Load settings, hide-status, and menu items in parallel; render when all three complete
+    var initData = { settings: null, hideStatus: null, items: null };
+    function tryRenderAfterLoad() {
+        if (initData.settings === null || initData.hideStatus === null || initData.items === null) {
+            return;
+        }
+        hub.hideEnabled = !!(initData.hideStatus && initData.hideStatus.hideEnabled) || getPersistedHubOnly();
+        ensureHubOnlyObserver();
+        applyHubOnlyFallback(hub.hideEnabled);
+        renderHub();
+    }
+
+    $.ajax('/api/servicehub/service/getSettings', {
+        type: 'GET', cache: false,
+        success: function (cfg) {
+            try { hub.assignments = JSON.parse(cfg.assignments || '{}'); } catch (e) { hub.assignments = {}; }
+            try {
+                var cats = JSON.parse(cfg.categories || '[]');
+                if (cats.length) hub.categories = cats;
+            } catch (e) {}
+            initData.settings = cfg;
+            tryRenderAfterLoad();
+        },
+        error: function () {
+            $('#hubContent').html('<div class="alert alert-danger">Failed to load settings from API.</div>');
+        }
+    });
+
+    $.ajax('/api/servicehub/service/getHideStatus', {
+        type: 'GET', cache: false,
+        success: function (status) {
+            initData.hideStatus = status || {};
+            tryRenderAfterLoad();
+        },
+        error: function () {
+            initData.hideStatus = {};
+            tryRenderAfterLoad();
+        }
+    });
+
+    $.ajax('/api/servicehub/service/getMenuItems', {
+        type: 'GET', cache: false,
+        success: function (resp) {
+            hub.items = resp.items || [];
+            initData.items = hub.items;
+            tryRenderAfterLoad();
+        },
+        error: function () {
+            $('#hubContent').html('<div class="alert alert-danger">Failed to load plugin list from API.</div>');
+        }
+    });
+
+    // ---- Diagnostic: show real sidebar HTML to calibrate CSS selectors ----
+    $(document).on('click', '#hubDiagBtn', function () {
+        var html = document.getElementById('navigation')
+            ? document.getElementById('navigation').innerHTML
+            : '(#navigation not found in DOM)';
+        // Summarise: find all <a> tags with href
+        var $nav = $('#navigation');
+        var lines = [];
+        $nav.find('a[href]').each(function () {
+            var el = this;
+            var ids = [];
+            $(el).parents('[id]').each(function () { ids.unshift('#' + this.id); });
+            lines.push(ids.join(' > ') + ' >> ' + el.href);
+        });
+        var summary = lines.length
+            ? lines.join('\n')
+            : html.substring(0, 4000);
+
+        var $modal = $('<div class="modal fade" tabindex="-1"></div>');
+        var $dialog = $('<div class="modal-dialog modal-lg"></div>');
+        var $content = $('<div class="modal-content"></div>');
+        $content.append(
+            '<div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>' +
+            '<h4 class="modal-title">Sidebar structure (copy and share for CSS calibration)</h4></div>',
+            $('<div class="modal-body"></div>').append(
+                $('<textarea class="form-control" rows="20" style="font-family:monospace;font-size:11px;"></textarea>')
+                    .val(summary)
+            ),
+            '<div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div>'
+        );
+        $dialog.append($content);
+        $modal.append($dialog);
+        $('body').append($modal);
+        $modal.modal('show').on('hidden.bs.modal', function () { $modal.remove(); });
+    });
+});
+</script>
+
+<div class="content-box">
+    <div class="content-box-main" style="padding: 16px;">
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+            <h4 style="margin:0; font-weight:600;">
+                <i class="fa fa-th" style="margin-right:8px; opacity:0.8;"></i>
+                Services Hub
+                <small style="font-size:12px; color:#aaa; margin-left:8px; font-weight:400;">
+                    All installed plugins, organised by category
+                </small>
+            </h4>
+            <div id="hubToolbar"></div>
+        </div>
+
+        <div id="hubContent"></div>
+
+        <div style="margin-top:16px; text-align:right;">
+            <button id="hubDiagBtn" class="btn btn-link btn-xs" style="color:#bbb; font-size:11px;">
+                <i class="fa fa-stethoscope"></i> Diagnose sidebar structure
+            </button>
+        </div>
+
+    </div>
+</div>
+                </section>
+            </div>
+          </div>
+        </section>
+        <!-- page footer -->
+        <footer class="page-foot">
+          <div class="container-fluid">
+            <a target="_blank" href="https://opnsense.org/">OPNsense</a> (c) 2014-2026            <a target="_blank" href="https://www.deciso.com/">Deciso B.V.</a>
+          </div>
+        </footer>
+      </div>
+    </main>
+
+    <!-- dialog "wait for (service) action" -->
+    <div class="modal fade" id="OPNsenseStdWaitDialog" tabindex="-1" data-backdrop="static" data-keyboard="false">
+      <div class="modal-backdrop fade in"></div>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <p><strong>Please wait...</strong></p>
+            <div class="progress">
+               <div class="progress-bar progress-bar-info progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width:100%"></div>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        /* hook translations  when all JS modules are loaded*/
+        $.extend(jQuery.fn.UIBootgrid.translations, {
+            add: "Add",
+            deleteSelected: "Delete selected",
+            enableSelected: "Enable selected",
+            disableSelected: "Disable selected",
+            edit: "Edit",
+            disable: "Disable",
+            enable: "Enable",
+            delete: "Delete",
+            info: "Info",
+            clone: "Clone",
+            all: "All",
+            search: "Search",
+            removeWarning: "Remove selected item(s)?",
+            noresultsfound: "No results found",
+            refresh: "Refresh",
+            infosTotal: "Showing {{ctx.start}} to {{ctx.end}} of {{ctx.totalRows}} entries",
+            infos: "Showing {{ctx.start}} to {{ctx.end}}",
+            resetGrid: "Reset grid layout",
+            searchColumns: "Search columns",
+            expand: "Click to expand/collapse cell"
+        });
+    </script>
+
+  </body>
+</html>
