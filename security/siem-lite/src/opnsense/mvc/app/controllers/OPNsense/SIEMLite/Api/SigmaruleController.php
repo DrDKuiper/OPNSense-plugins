@@ -4,7 +4,7 @@ namespace OPNsense\SIEMLite\Api;
 
 use OPNsense\Base\ApiMutableModelControllerBase;
 
-class SigmaRuleController extends ApiMutableModelControllerBase
+class SigmaruleController extends ApiMutableModelControllerBase
 {
     protected static $internalModelName = 'sigmarule';
     protected static $internalModelClass = '\OPNsense\SIEMLite\SigmaRule';

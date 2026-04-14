@@ -6,7 +6,7 @@ use OPNsense\Base\ApiControllerBase;
 use OPNsense\SIEMLite\Alert;
 use OPNsense\Core\Config;
 
-class AlertSettingsController extends ApiControllerBase
+class AlertsettingsController extends ApiControllerBase
 {
     public function getAction()
     {
