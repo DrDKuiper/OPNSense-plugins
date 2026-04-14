@@ -127,24 +127,25 @@ $(document).ready(function() {
     if (urlParams.get('time')) $('#filter-time').val(urlParams.get('time'));
 
     var $grid = $("#grid-events").UIBootgrid({
-        ajax: true,
-        url: '/api/siemlite/event/search',
-        formatters: {
-            severity: function(column, row) {
-                var s = row.severity || 'informational';
-                return '<span class="severity-dot ' + s + '"></span>' + s;
+        search: '/api/siemlite/event/search',
+        options: {
+            formatters: {
+                severity: function(column, row) {
+                    var s = row.severity || 'informational';
+                    return '<span class="severity-dot ' + s + '"></span>' + s;
+                },
+                eventcommands: function(column, row) {
+                    return '<button type="button" class="btn btn-xs btn-default event-detail-btn" data-id="' +
+                        row.id + '" title="View details"><i class="fa fa-eye"></i></button>';
+                }
             },
-            eventcommands: function(column, row) {
-                return '<button type="button" class="btn btn-xs btn-default event-detail-btn" data-id="' +
-                    row.id + '" title="View details"><i class="fa fa-eye"></i></button>';
+            requestHandler: function(request) {
+                request.source = $('#filter-source').val();
+                request.severity = $('#filter-severity').val();
+                request.timeRange = $('#filter-time').val();
+                request.searchPhrase = $('#filter-search').val();
+                return request;
             }
-        },
-        requestHandler: function(request) {
-            request.source = $('#filter-source').val();
-            request.severity = $('#filter-severity').val();
-            request.timeRange = $('#filter-time').val();
-            request.searchPhrase = $('#filter-search').val();
-            return request;
         }
     });
 

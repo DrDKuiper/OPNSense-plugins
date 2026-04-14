@@ -98,37 +98,38 @@ $(document).ready(function() {
     if (urlParams.get('search')) $('#alert-filter-search').val(urlParams.get('search'));
 
     var $grid = $("#grid-alerts").UIBootgrid({
-        ajax: true,
-        url: '/api/siemlite/alert/search',
-        formatters: {
-            severity: function(column, row) {
-                return '<span class="severity-badge ' + (row.severity || 'low') + '">' + (row.severity || '') + '</span>';
-            },
-            alertstatus: function(column, row) {
-                var cls = 'alert-status-' + (row.status || 'new');
-                var icons = {new: 'fa-exclamation-circle', acknowledged: 'fa-check-circle', closed: 'fa-times-circle'};
-                var icon = icons[row.status] || 'fa-question-circle';
-                return '<span class="' + cls + '"><i class="fa ' + icon + '"></i> ' + (row.status || 'new') + '</span>';
-            },
-            alertcommands: function(column, row) {
-                var html = '';
-                if (row.status === 'new') {
-                    html += '<button class="btn btn-xs btn-warning alert-ack-btn" data-id="' + row.id +
-                        '" title="Acknowledge"><i class="fa fa-check"></i></button> ';
+        search: '/api/siemlite/alert/search',
+        options: {
+            formatters: {
+                severity: function(column, row) {
+                    return '<span class="severity-badge ' + (row.severity || 'low') + '">' + (row.severity || '') + '</span>';
+                },
+                alertstatus: function(column, row) {
+                    var cls = 'alert-status-' + (row.status || 'new');
+                    var icons = {new: 'fa-exclamation-circle', acknowledged: 'fa-check-circle', closed: 'fa-times-circle'};
+                    var icon = icons[row.status] || 'fa-question-circle';
+                    return '<span class="' + cls + '"><i class="fa ' + icon + '"></i> ' + (row.status || 'new') + '</span>';
+                },
+                alertcommands: function(column, row) {
+                    var html = '';
+                    if (row.status === 'new') {
+                        html += '<button class="btn btn-xs btn-warning alert-ack-btn" data-id="' + row.id +
+                            '" title="Acknowledge"><i class="fa fa-check"></i></button> ';
+                    }
+                    if (row.status !== 'closed') {
+                        html += '<button class="btn btn-xs btn-success alert-close-btn" data-id="' + row.id +
+                            '" title="Close"><i class="fa fa-times"></i></button>';
+                    }
+                    return html;
                 }
-                if (row.status !== 'closed') {
-                    html += '<button class="btn btn-xs btn-success alert-close-btn" data-id="' + row.id +
-                        '" title="Close"><i class="fa fa-times"></i></button>';
-                }
-                return html;
+            },
+            requestHandler: function(request) {
+                request.severity = $('#alert-filter-severity').val();
+                request.status = $('#alert-filter-status').val();
+                request.timeRange = $('#alert-filter-time').val();
+                request.searchPhrase = $('#alert-filter-search').val();
+                return request;
             }
-        },
-        requestHandler: function(request) {
-            request.severity = $('#alert-filter-severity').val();
-            request.status = $('#alert-filter-status').val();
-            request.timeRange = $('#alert-filter-time').val();
-            request.searchPhrase = $('#alert-filter-search').val();
-            return request;
         }
     });
 

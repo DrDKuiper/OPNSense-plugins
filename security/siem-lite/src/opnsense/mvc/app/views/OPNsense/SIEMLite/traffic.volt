@@ -188,8 +188,8 @@
 
 <script>
 $(document).ready(function() {
-    var timelineChart, protocolChart, interfaceChart;
     var chartTextColor = getComputedStyle(document.body).color || '#ccc';
+    var gridColor = 'rgba(128,128,128,0.2)';
 
     function fmt(n) {
         if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
@@ -217,80 +217,156 @@ $(document).ready(function() {
     }
 
     function renderTimeline(timeline) {
-        var ctx = document.getElementById('traffic-timeline-chart').getContext('2d');
-        if (timelineChart) timelineChart.destroy();
-        timelineChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: timeline.map(function(t) { return t.label; }),
-                datasets: [
-                    {
-                        label: 'Allowed',
-                        data: timeline.map(function(t) { return t.allowed || 0; }),
-                        backgroundColor: 'rgba(92,184,92,0.6)',
-                        borderWidth: 0
-                    },
-                    {
-                        label: 'Blocked',
-                        data: timeline.map(function(t) { return t.blocked || 0; }),
-                        backgroundColor: 'rgba(217,83,79,0.6)',
-                        borderWidth: 0
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: true, ticks: { color: chartTextColor, maxRotation: 45 }, grid: { display: false } },
-                    y: { stacked: true, beginAtZero: true, ticks: { color: chartTextColor }, grid: { color: 'rgba(128,128,128,0.1)' } }
-                },
-                plugins: { legend: { labels: { color: chartTextColor } } }
-            }
+        var canvas = document.getElementById('traffic-timeline-chart');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var W = canvas.width = canvas.parentElement.clientWidth - 30;
+        var H = canvas.height = 200;
+        ctx.clearRect(0, 0, W, H);
+
+        if (!timeline.length) {
+            ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.4;
+            ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('No timeline data', W / 2, H / 2);
+            ctx.globalAlpha = 1; return;
+        }
+
+        var maxVal = Math.max.apply(null, timeline.map(function(t) { return t.total || 0; })) || 1;
+        var barW = Math.max(2, (W - 50) / timeline.length - 1);
+        var chartH = H - 30;
+
+        // Grid
+        ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
+        for (var g = 0; g <= 4; g++) {
+            var gy = chartH - (chartH / 4 * g);
+            ctx.beginPath(); ctx.moveTo(40, gy); ctx.lineTo(W, gy); ctx.stroke();
+            ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.5;
+            ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+            ctx.fillText(fmt(Math.round(maxVal / 4 * g)), 37, gy + 3);
+            ctx.globalAlpha = 1;
+        }
+
+        // Stacked bars
+        timeline.forEach(function(item, i) {
+            var x = 45 + i * (barW + 1);
+            var allowed = item.allowed || 0;
+            var blocked = item.blocked || 0;
+            var hAllowed = (allowed / maxVal) * chartH;
+            var hBlocked = (blocked / maxVal) * chartH;
+            // Allowed (green) on bottom
+            ctx.fillStyle = 'rgba(92,184,92,0.7)';
+            ctx.fillRect(x, chartH - hAllowed - hBlocked, barW, hAllowed);
+            // Blocked (red) on top
+            ctx.fillStyle = 'rgba(217,83,79,0.7)';
+            ctx.fillRect(x, chartH - hBlocked, barW, hBlocked);
         });
+
+        // X labels
+        ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.5;
+        ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+        var step = Math.max(1, Math.floor(timeline.length / 8));
+        for (var j = 0; j < timeline.length; j += step) {
+            ctx.fillText(timeline[j].label || '', 45 + j * (barW + 1) + barW / 2, H - 2);
+        }
+        ctx.globalAlpha = 1;
+
+        // Legend
+        ctx.fillStyle = 'rgba(92,184,92,0.7)';
+        ctx.fillRect(W - 160, 5, 12, 12);
+        ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.7;
+        ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('Allowed', W - 144, 15);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = 'rgba(217,83,79,0.7)';
+        ctx.fillRect(W - 80, 5, 12, 12);
+        ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.7;
+        ctx.fillText('Blocked', W - 64, 15);
+        ctx.globalAlpha = 1;
     }
 
     function renderProtocols(protocols) {
-        var ctx = document.getElementById('protocol-chart').getContext('2d');
-        if (protocolChart) protocolChart.destroy();
+        var canvas = document.getElementById('protocol-chart');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var W = canvas.width = canvas.parentElement.clientWidth - 30;
+        var H = canvas.height = 200;
+        ctx.clearRect(0, 0, W, H);
+
+        if (!protocols.length) {
+            ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.4;
+            ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('No protocol data', W / 2, H / 2);
+            ctx.globalAlpha = 1; return;
+        }
+
         var colors = ['#5bc0de','#5cb85c','#f0ad4e','#d9534f','#9b59b6','#3498db','#e67e22','#1abc9c','#e74c3c','#95a5a6'];
-        protocolChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: protocols.map(function(p) { return p.name; }),
-                datasets: [{
-                    data: protocols.map(function(p) { return p.count; }),
-                    backgroundColor: colors.slice(0, protocols.length),
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'right', labels: { color: chartTextColor, padding: 12 } } }
-            }
+        var total = protocols.reduce(function(s, p) { return s + p.count; }, 0);
+        var cx = W / 2 - 60, cy = H / 2, r = Math.min(cx, cy) - 10;
+        var startAngle = -Math.PI / 2;
+
+        // Doughnut
+        protocols.forEach(function(p, i) {
+            var sliceAngle = (p.count / total) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
+            ctx.arc(cx, cy, r * 0.55, startAngle + sliceAngle, startAngle, true);
+            ctx.closePath();
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.fill();
+            startAngle += sliceAngle;
+        });
+
+        // Legend
+        var ly = 15;
+        ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+        protocols.forEach(function(p, i) {
+            var lx = W - 110;
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.fillRect(lx, ly - 9, 10, 10);
+            ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.8;
+            ctx.fillText(p.name + ' (' + fmt(p.count) + ')', lx + 14, ly);
+            ctx.globalAlpha = 1;
+            ly += 18;
         });
     }
 
     function renderInterfaces(interfaces) {
-        var ctx = document.getElementById('interface-chart').getContext('2d');
-        if (interfaceChart) interfaceChart.destroy();
+        var canvas = document.getElementById('interface-chart');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var W = canvas.width = canvas.parentElement.clientWidth - 30;
+        var H = canvas.height = 200;
+        ctx.clearRect(0, 0, W, H);
+
+        if (!interfaces.length) {
+            ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.4;
+            ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('No interface data', W / 2, H / 2);
+            ctx.globalAlpha = 1; return;
+        }
+
         var colors = ['#3498db','#2ecc71','#e74c3c','#f39c12','#9b59b6','#1abc9c'];
-        interfaceChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: interfaces.map(function(i) { return i.name; }),
-                datasets: [{
-                    data: interfaces.map(function(i) { return i.count; }),
-                    backgroundColor: colors.slice(0, interfaces.length),
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'right', labels: { color: chartTextColor, padding: 12 } } }
-            }
+        var maxVal = interfaces[0].count || 1;
+        var barH = Math.min(30, (H - 20) / interfaces.length - 6);
+
+        interfaces.forEach(function(iface, i) {
+            var y = 10 + i * (barH + 6);
+            var pct = Math.max(2, (iface.count / maxVal) * (W - 160));
+            // Label
+            ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.7;
+            ctx.font = '12px monospace'; ctx.textAlign = 'right';
+            ctx.fillText(iface.name, 70, y + barH / 2 + 4);
+            ctx.globalAlpha = 1;
+            // Bar
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(80, y, pct, barH);
+            ctx.globalAlpha = 1;
+            // Count
+            ctx.fillStyle = chartTextColor; ctx.globalAlpha = 0.8;
+            ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText(fmt(iface.count), 85 + pct, y + barH / 2 + 4);
+            ctx.globalAlpha = 1;
         });
     }
 
@@ -319,23 +395,24 @@ $(document).ready(function() {
 
     // Flows table
     var $grid = $("#grid-flows").UIBootgrid({
-        ajax: true,
-        url: '/api/siemlite/traffic/flows',
-        formatters: {
-            actionfmt: function(col, row) {
-                var parts = (row.actions || '').split(',');
-                var h = '';
-                $.each(parts, function(i, a) {
-                    a = $.trim(a);
-                    if (a) h += '<span class="action-badge ' + a + '">' + a + '</span> ';
-                });
-                return h || '—';
+        search: '/api/siemlite/traffic/flows',
+        options: {
+            formatters: {
+                actionfmt: function(col, row) {
+                    var parts = (row.actions || '').split(',');
+                    var h = '';
+                    $.each(parts, function(i, a) {
+                        a = $.trim(a);
+                        if (a) h += '<span class="action-badge ' + a + '">' + a + '</span> ';
+                    });
+                    return h || '—';
+                }
+            },
+            requestHandler: function(request) {
+                request.timeRange = $('#tf-time').val();
+                request.protocol = $('#tf-protocol').val();
+                return request;
             }
-        },
-        requestHandler: function(request) {
-            request.timeRange = $('#tf-time').val();
-            request.protocol = $('#tf-protocol').val();
-            return request;
         }
     });
 
