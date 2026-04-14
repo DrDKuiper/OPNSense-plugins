@@ -10,13 +10,13 @@ class PacketinspectorController extends ApiControllerBase
     public function connectionsAction()
     {
         $backend = new Backend();
-        $params = json_encode(array(
+        $params = base64_encode(json_encode(array(
             'limit' => intval($this->request->getPost('rowCount', 'int', 100)),
             'filter' => $this->request->getPost('searchPhrase', 'string', ''),
             'protocol' => $this->request->getPost('protocol', 'string', ''),
             'state' => $this->request->getPost('state', 'string', '')
-        ));
-        $response = $backend->configdpRun("siemlite active-connections", array(escapeshellarg($params)));
+        )));
+        $response = $backend->configdpRun("siemlite active-connections", array($params));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array('rows' => array(), 'total' => 0);
     }
@@ -33,12 +33,12 @@ class PacketinspectorController extends ApiControllerBase
         // Sanitize BPF filter — only allow safe characters
         $filter = preg_replace('/[^a-zA-Z0-9\s\.\:\-\/\>\<\=\!\(\)\&\|]/', '', $filter);
 
-        $params = json_encode(array(
+        $params = base64_encode(json_encode(array(
             'interface' => $interface,
             'count' => $count,
             'filter' => $filter
-        ));
-        $response = $backend->configdpRun("siemlite capture-packets", array(escapeshellarg($params)));
+        )));
+        $response = $backend->configdpRun("siemlite capture-packets", array($params));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array('packets' => array(), 'total' => 0);
     }
@@ -55,7 +55,7 @@ class PacketinspectorController extends ApiControllerBase
     {
         $backend = new Backend();
         $limit = intval($this->request->get('limit', 'int', 50));
-        $response = $backend->configdpRun("siemlite dns-queries", array(escapeshellarg(strval($limit))));
+        $response = $backend->configdpRun("siemlite dns-queries", array(strval($limit)));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array('queries' => array());
     }

@@ -17,15 +17,15 @@ class TrafficController extends ApiControllerBase
         $timeRange = $this->request->getPost('timeRange', 'string', '24h');
         $protocol = $this->request->getPost('protocol', 'string', '');
 
-        $params = json_encode(array(
+        $params = base64_encode(json_encode(array(
             'offset' => $offset,
             'limit' => $itemsPerPage,
             'search' => $searchPhrase,
             'time_range' => $timeRange,
             'protocol' => $protocol
-        ));
+        )));
 
-        $response = $backend->configdpRun("siemlite traffic-flows", array(escapeshellarg($params)));
+        $response = $backend->configdpRun("siemlite traffic-flows", array($params));
         $data = json_decode($response, true);
 
         if (!is_array($data)) {
@@ -44,7 +44,7 @@ class TrafficController extends ApiControllerBase
     {
         $backend = new Backend();
         $timeRange = $this->request->get('timeRange', 'string', '24h');
-        $response = $backend->configdpRun("siemlite traffic-stats", array(escapeshellarg($timeRange)));
+        $response = $backend->configdpRun("siemlite traffic-stats", array($timeRange));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array();
     }
@@ -53,7 +53,7 @@ class TrafficController extends ApiControllerBase
     {
         $backend = new Backend();
         $timeRange = $this->request->get('timeRange', 'string', '24h');
-        $response = $backend->configdpRun("siemlite traffic-ports", array(escapeshellarg($timeRange)));
+        $response = $backend->configdpRun("siemlite traffic-ports", array($timeRange));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array();
     }

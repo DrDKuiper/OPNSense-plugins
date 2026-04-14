@@ -8,6 +8,7 @@ DNS queries, interface listing, and traffic flow analysis.
 Copyright (C) 2024 Kuiper
 """
 
+import base64
 import json
 import os
 import re
@@ -17,6 +18,38 @@ import sys
 from datetime import datetime, timedelta
 
 DB_PATH = '/var/db/siemlite/siem.db'
+
+
+def decode_params(raw):
+    """Decode parameters from configd - handles JSON, quoted JSON, and base64."""
+    if not raw or not isinstance(raw, str):
+        return {}
+    raw = raw.strip()
+    # Try direct JSON
+    try:
+        result = json.loads(raw)
+        if isinstance(result, dict):
+            return result
+    except (json.JSONDecodeError, ValueError):
+        pass
+    # Try stripping shell quotes
+    for quote in ("'", '"'):
+        if raw.startswith(quote) and raw.endswith(quote):
+            try:
+                result = json.loads(raw[1:-1])
+                if isinstance(result, dict):
+                    return result
+            except (json.JSONDecodeError, ValueError):
+                pass
+    # Try base64
+    try:
+        decoded = base64.b64decode(raw).decode('utf-8')
+        result = json.loads(decoded)
+        if isinstance(result, dict):
+            return result
+    except Exception:
+        pass
+    return {}
 
 
 def get_conn():
@@ -36,7 +69,7 @@ def time_range_to_seconds(tr):
 # ─── Active Connections (pfctl) ──────────────────────────────────────────────
 
 def active_connections(params):
-    p = json.loads(params) if isinstance(params, str) else params
+    p = decode_params(params)
     limit = int(p.get('limit', 200))
     filter_text = p.get('filter', '').lower()
     proto_filter = p.get('protocol', '').lower()
@@ -138,7 +171,7 @@ def parse_pf_state(line):
 # ─── Packet Capture (tcpdump) ────────────────────────────────────────────────
 
 def capture_packets(params):
-    p = json.loads(params) if isinstance(params, str) else params
+    p = decode_params(params)
     interface = p.get('interface', 'em0')
     count = min(int(p.get('count', 25)), 100)
     bpf_filter = p.get('filter', '')
@@ -388,7 +421,7 @@ def traffic_flows(params):
         print(json.dumps({'rows': [], 'total': 0}))
         return
 
-    p = json.loads(params) if isinstance(params, str) else params
+    p = decode_params(params)
     offset = int(p.get('offset', 0))
     limit = int(p.get('limit', 20))
     search = p.get('search', '')

@@ -14,7 +14,7 @@ class DashboardController extends ApiControllerBase
     {
         $backend = new Backend();
         $timeRange = $this->request->get('timeRange', 'string', '24h');
-        $response = $backend->configdpRun("siemlite dashboard-stats", array(escapeshellarg($timeRange)));
+        $response = $backend->configdpRun("siemlite dashboard-stats", array($timeRange));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array(
             'total_events' => 0,

@@ -22,16 +22,16 @@ class AlertController extends ApiControllerBase
         $status = $this->request->getPost('status', 'string', '');
         $timeRange = $this->request->getPost('timeRange', 'string', '24h');
 
-        $params = json_encode(array(
+        $params = base64_encode(json_encode(array(
             'offset' => $offset,
             'limit' => $itemsPerPage,
             'search' => $searchPhrase,
             'severity' => $severity,
             'status' => $status,
             'time_range' => $timeRange
-        ));
+        )));
 
-        $response = $backend->configdpRun("siemlite query-alerts", array(escapeshellarg($params)));
+        $response = $backend->configdpRun("siemlite query-alerts", array($params));
         $data = json_decode($response, true);
 
         if (!is_array($data)) {
@@ -53,7 +53,7 @@ class AlertController extends ApiControllerBase
     {
         if ($this->request->isPost()) {
             $backend = new Backend();
-            $response = $backend->configdpRun("siemlite ack-alert", array(escapeshellarg($alertId)));
+            $response = $backend->configdpRun("siemlite ack-alert", array($alertId));
             return json_decode($response, true) ?: array('status' => 'error');
         }
         return array('status' => 'failed');
@@ -66,7 +66,7 @@ class AlertController extends ApiControllerBase
     {
         if ($this->request->isPost()) {
             $backend = new Backend();
-            $response = $backend->configdpRun("siemlite close-alert", array(escapeshellarg($alertId)));
+            $response = $backend->configdpRun("siemlite close-alert", array($alertId));
             return json_decode($response, true) ?: array('status' => 'error');
         }
         return array('status' => 'failed');

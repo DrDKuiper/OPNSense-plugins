@@ -183,11 +183,11 @@
         <table id="grid-connections" class="table table-condensed table-hover table-striped">
             <thead>
                 <tr>
-                    <th data-column-id="proto" data-type="string" data-width="70px" data-formatter="protofmt">{{ lang._('Proto') }}</th>
-                    <th data-column-id="src" data-type="string" data-width="200px" data-css-class="monospace-cell">{{ lang._('Source') }}</th>
-                    <th data-column-id="direction" data-type="string" data-width="40px">{{ lang._('Dir') }}</th>
-                    <th data-column-id="dst" data-type="string" data-width="200px" data-css-class="monospace-cell">{{ lang._('Destination') }}</th>
-                    <th data-column-id="state" data-type="string" data-formatter="statefmt">{{ lang._('State') }}</th>
+                    <th style="width:70px">{{ lang._('Proto') }}</th>
+                    <th style="width:200px">{{ lang._('Source') }}</th>
+                    <th style="width:40px">{{ lang._('Dir') }}</th>
+                    <th style="width:200px">{{ lang._('Destination') }}</th>
+                    <th>{{ lang._('State') }}</th>
                 </tr>
             </thead>
             <tbody></tbody>

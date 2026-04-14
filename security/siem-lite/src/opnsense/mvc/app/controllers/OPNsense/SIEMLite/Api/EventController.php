@@ -22,16 +22,16 @@ class EventController extends ApiControllerBase
         $source = $this->request->getPost('source', 'string', '');
         $timeRange = $this->request->getPost('timeRange', 'string', '24h');
 
-        $params = json_encode(array(
+        $params = base64_encode(json_encode(array(
             'offset' => $offset,
             'limit' => $itemsPerPage,
             'search' => $searchPhrase,
             'severity' => $severity,
             'source' => $source,
             'time_range' => $timeRange
-        ));
+        )));
 
-        $response = $backend->configdpRun("siemlite query-events", array(escapeshellarg($params)));
+        $response = $backend->configdpRun("siemlite query-events", array($params));
         $data = json_decode($response, true);
 
         if (!is_array($data)) {
@@ -52,7 +52,7 @@ class EventController extends ApiControllerBase
     public function getAction($eventId)
     {
         $backend = new Backend();
-        $response = $backend->configdpRun("siemlite get-event", array(escapeshellarg($eventId)));
+        $response = $backend->configdpRun("siemlite get-event", array($eventId));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array();
     }

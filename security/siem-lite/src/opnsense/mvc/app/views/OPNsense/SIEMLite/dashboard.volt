@@ -19,6 +19,14 @@
     .siem-card.high { border-left-color: #f0ad4e; }
     .siem-card.medium { border-left-color: #5bc0de; }
     .siem-card.low { border-left-color: #5cb85c; }
+    .siem-card.clickable {
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .siem-card.clickable:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
 
     .stat-value {
         font-size: 2.2em;
@@ -72,6 +80,33 @@
     }
     .top-list li:last-child { border-bottom: none; }
     .top-list .count { font-weight: 600; color: #337ab7; }
+    .top-list li.clickable-ip {
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+    .top-list li.clickable-ip:hover {
+        background: rgba(51,122,183,0.08);
+    }
+    .refresh-indicator {
+        font-size: 0.75em;
+        opacity: 0.5;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .refresh-indicator .countdown-bar {
+        width: 40px;
+        height: 3px;
+        background: rgba(128,128,128,0.2);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    .refresh-indicator .countdown-fill {
+        height: 100%;
+        background: #337ab7;
+        border-radius: 2px;
+        transition: width 1s linear;
+    }
 
     .siem-header {
         display: flex;
@@ -125,6 +160,11 @@
 <div class="siem-header">
     <h2><i class="fa fa-shield"></i> SIEM Dashboard</h2>
     <div style="display:flex; align-items:center; gap:15px;">
+        <span class="refresh-indicator">
+            <button class="btn btn-xs btn-default" id="btn-manual-refresh" title="Refresh now"><i class="fa fa-refresh"></i></button>
+            <span class="countdown-bar"><span class="countdown-fill" id="countdown-fill" style="width:100%"></span></span>
+            <span id="countdown-text">30s</span>
+        </span>
         <span id="siem-service-status"></span>
         <div class="btn-group time-selector" id="timeRangeSelector">
             <button class="btn btn-default" data-range="1h">1H</button>
@@ -143,37 +183,37 @@
 <!-- KPI Cards Row -->
 <div class="row">
     <div class="col-md-2">
-        <div class="siem-card">
-            <div class="stat-label">Total Events</div>
+        <div class="siem-card clickable" data-href="/ui/siemlite/events" title="View all events">
+            <div class="stat-label">Total Events <i class="fa fa-external-link" style="opacity:0.3;font-size:0.8em"></i></div>
             <div class="stat-value" id="stat-total-events">—</div>
         </div>
     </div>
     <div class="col-md-2">
-        <div class="siem-card">
-            <div class="stat-label">Active Alerts</div>
+        <div class="siem-card clickable" data-href="/ui/siemlite/alerts" title="View active alerts">
+            <div class="stat-label">Active Alerts <i class="fa fa-external-link" style="opacity:0.3;font-size:0.8em"></i></div>
             <div class="stat-value" id="stat-total-alerts">—</div>
         </div>
     </div>
     <div class="col-md-2">
-        <div class="siem-card critical">
+        <div class="siem-card critical clickable" data-href="/ui/siemlite/alerts" data-filter="critical" title="View critical alerts">
             <div class="stat-label">Critical</div>
             <div class="stat-value text-danger" id="stat-critical">—</div>
         </div>
     </div>
     <div class="col-md-2">
-        <div class="siem-card high">
+        <div class="siem-card high clickable" data-href="/ui/siemlite/alerts" data-filter="high" title="View high alerts">
             <div class="stat-label">High</div>
             <div class="stat-value text-warning" id="stat-high">—</div>
         </div>
     </div>
     <div class="col-md-2">
-        <div class="siem-card medium">
+        <div class="siem-card medium clickable" data-href="/ui/siemlite/alerts" data-filter="medium" title="View medium alerts">
             <div class="stat-label">Medium</div>
             <div class="stat-value text-info" id="stat-medium">—</div>
         </div>
     </div>
     <div class="col-md-2">
-        <div class="siem-card low">
+        <div class="siem-card low clickable" data-href="/ui/siemlite/alerts" data-filter="low" title="View low alerts">
             <div class="stat-label">Low</div>
             <div class="stat-value text-success" id="stat-low">—</div>
         </div>
@@ -277,7 +317,7 @@ $(document).ready(function() {
                 $src.append('<li class="siem-nodata">No data available</li>');
             } else {
                 $.each(data.top_sources, function(i, item) {
-                    $src.append('<li><span>' + $('<span>').text(item.ip).html() +
+                    $src.append('<li class="clickable-ip" data-ip="' + $('<span>').text(item.ip).html() + '" title="Click to view events from ' + $('<span>').text(item.ip).html() + '"><span><i class="fa fa-chevron-right" style="opacity:0.2;font-size:0.7em;margin-right:5px"></i>' + $('<span>').text(item.ip).html() +
                         (item.country ? ' <i class="fa fa-globe" style="opacity:0.5"></i> ' + $('<span>').text(item.country).html() : '') +
                         '</span><span class="count">' + formatNumber(item.count) + '</span></li>');
                 });
@@ -289,7 +329,7 @@ $(document).ready(function() {
                 $dst.append('<li class="siem-nodata">No data available</li>');
             } else {
                 $.each(data.top_destinations, function(i, item) {
-                    $dst.append('<li><span>' + $('<span>').text(item.ip).html() +
+                    $dst.append('<li class="clickable-ip" data-ip="' + $('<span>').text(item.ip).html() + '" title="Click to view events to ' + $('<span>').text(item.ip).html() + '"><span><i class="fa fa-chevron-right" style="opacity:0.2;font-size:0.7em;margin-right:5px"></i>' + $('<span>').text(item.ip).html() +
                         '</span><span class="count">' + formatNumber(item.count) + '</span></li>');
                 });
             }
@@ -427,9 +467,63 @@ $(document).ready(function() {
         loadDashboard();
     });
 
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 30 seconds with countdown
+    var refreshInterval = 30;
+    var countdown = refreshInterval;
+    var countdownTimer;
+
+    function resetCountdown() {
+        countdown = refreshInterval;
+        $('#countdown-fill').css('width', '100%');
+        $('#countdown-text').text(countdown + 's');
+    }
+
+    function startCountdown() {
+        clearInterval(countdownTimer);
+        resetCountdown();
+        countdownTimer = setInterval(function() {
+            countdown--;
+            var pct = (countdown / refreshInterval) * 100;
+            $('#countdown-fill').css('width', pct + '%');
+            $('#countdown-text').text(countdown + 's');
+            if (countdown <= 0) {
+                loadDashboard();
+                resetCountdown();
+            }
+        }, 1000);
+    }
+
     loadDashboard();
-    setInterval(loadDashboard, 30000);
+    startCountdown();
+
+    // Manual refresh
+    $('#btn-manual-refresh').click(function() {
+        $(this).find('i').addClass('fa-spin');
+        loadDashboard();
+        resetCountdown();
+        setTimeout(function() { $('#btn-manual-refresh i').removeClass('fa-spin'); }, 600);
+    });
+
+    // Clickable KPI cards
+    $(document).on('click', '.siem-card.clickable', function() {
+        var href = $(this).data('href');
+        var filter = $(this).data('filter');
+        if (href) {
+            if (filter) {
+                window.location.href = href + '?severity=' + filter;
+            } else {
+                window.location.href = href;
+            }
+        }
+    });
+
+    // Clickable IPs — navigate to Events page with search filter
+    $(document).on('click', '.clickable-ip', function() {
+        var ip = $(this).data('ip');
+        if (ip) {
+            window.location.href = '/ui/siemlite/events?search=' + encodeURIComponent(ip);
+        }
+    });
 
     // Check service status
     function checkServiceStatus() {

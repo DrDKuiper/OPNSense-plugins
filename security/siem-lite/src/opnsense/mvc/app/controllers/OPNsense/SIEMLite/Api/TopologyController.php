@@ -13,8 +13,8 @@ class TopologyController extends ApiControllerBase
         $timeRange = $this->request->get('timeRange', 'string', '24h');
         $minCount = intval($this->request->get('minCount', 'int', 2));
         $response = $backend->configdpRun("siemlite topology-data", array(
-            escapeshellarg($timeRange),
-            escapeshellarg(strval($minCount))
+            $timeRange,
+            strval($minCount)
         ));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array('nodes' => array(), 'edges' => array());
@@ -23,7 +23,7 @@ class TopologyController extends ApiControllerBase
     public function nodedetailAction($ip)
     {
         $backend = new Backend();
-        $response = $backend->configdpRun("siemlite node-detail", array(escapeshellarg($ip)));
+        $response = $backend->configdpRun("siemlite node-detail", array($ip));
         $data = json_decode($response, true);
         return is_array($data) ? $data : array();
     }

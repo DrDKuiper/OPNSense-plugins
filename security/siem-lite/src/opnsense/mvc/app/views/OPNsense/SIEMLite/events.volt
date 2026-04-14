@@ -119,6 +119,13 @@
 
 <script>
 $(document).ready(function() {
+    // Pre-fill filters from URL query params (from dashboard drill-down)
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('search')) $('#filter-search').val(urlParams.get('search'));
+    if (urlParams.get('severity')) $('#filter-severity').val(urlParams.get('severity'));
+    if (urlParams.get('source')) $('#filter-source').val(urlParams.get('source'));
+    if (urlParams.get('time')) $('#filter-time').val(urlParams.get('time'));
+
     var $grid = $("#grid-events").UIBootgrid({
         ajax: true,
         url: '/api/siemlite/event/search',
