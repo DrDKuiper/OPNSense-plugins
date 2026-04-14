@@ -144,7 +144,129 @@ class ServiceController extends ApiControllerBase
     }
 
     /**
-     * Activate hub-only mode (hides other Services menu items via JS).
+     * Build the servicehub overlay theme so it inherits from the user's
+     * real theme and adds Services-menu hiding rules.
+     */
+    private function buildOverlayTheme($baseTheme)
+    {
+        $themesBase = '/usr/local/opnsense/www/themes';
+        $srcDir     = $themesBase . '/' . $baseTheme;
+        $dstDir     = $themesBase . '/servicehub';
+
+        if (!is_dir($srcDir)) {
+            return false;
+        }
+
+        // Ensure target dirs exist
+        @mkdir($dstDir . '/build/css', 0755, true);
+        @mkdir($dstDir . '/build/images', 0755, true);
+        @mkdir($dstDir . '/build/fonts', 0755, true);
+
+        // Symlink images and fonts directories from base theme
+        $assetDirs = ['images', 'fonts'];
+        foreach ($assetDirs as $dir) {
+            $src = $srcDir . '/build/' . $dir;
+            $dst = $dstDir . '/build/' . $dir;
+            if (is_dir($src)) {
+                if (is_link($dst)) {
+                    unlink($dst);
+                } elseif (is_dir($dst)) {
+                    // Remove existing directory so we can symlink
+                    $this->removeDir($dst);
+                }
+                symlink($src, $dst);
+            }
+        }
+
+        // CSS files that just proxy through to the base theme
+        $proxyCss = [
+            'bootstrap-select.css',
+            'bootstrap-dialog.css',
+            'opnsense-bootgrid.css',
+            'dashboard.css',
+            'jquery.bootgrid.css',
+            'tokenize2.css',
+        ];
+        foreach ($proxyCss as $file) {
+            $src = $srcDir . '/build/css/' . $file;
+            $dst = $dstDir . '/build/css/' . $file;
+            if (file_exists($src)) {
+                if (is_link($dst) || file_exists($dst)) {
+                    unlink($dst);
+                }
+                symlink($src, $dst);
+            }
+        }
+
+        // Generate main.css: import base theme + add hiding rules
+        $hideRules = <<<'CSS'
+
+/*
+ * Services Hub — hide non-hub items in Services menu.
+ *
+ * Real sidebar structure:
+ *   <div id="Services" class="collapse">
+ *     <a href="#Services_Apcupsd" class="list-group-item" data-toggle="collapse">…</a>
+ *     <div class="collapse" id="Services_Apcupsd">…</div>
+ *     <a href="/ui/servicehub" class="list-group-item active">Services Hub</a>
+ *   </div>
+ */
+
+/* Hide group headers (collapse toggles) inside #Services */
+div#Services > a.list-group-item[data-toggle="collapse"] {
+    display: none !important;
+}
+
+/* Hide group content divs inside #Services */
+div#Services > div.collapse {
+    display: none !important;
+}
+
+/* Hide direct leaf links that are NOT Services Hub */
+div#Services > a.list-group-item:not([data-toggle]):not([href*="servicehub"]) {
+    display: none !important;
+}
+
+/* Always keep Services Hub visible */
+div#Services > a.list-group-item[href*="servicehub"] {
+    display: block !important;
+    font-weight: 600;
+}
+CSS;
+
+        $mainCss = '@import url("/ui/themes/' . $baseTheme . '/build/css/main.css");'
+                 . "\n" . $hideRules;
+
+        file_put_contents($dstDir . '/build/css/main.css', $mainCss);
+
+        return true;
+    }
+
+    /**
+     * Remove a directory recursively.
+     */
+    private function removeDir($dir)
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        $items = scandir($dir);
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $path = $dir . '/' . $item;
+            if (is_dir($path) && !is_link($path)) {
+                $this->removeDir($path);
+            } else {
+                unlink($path);
+            }
+        }
+        rmdir($dir);
+    }
+
+    /**
+     * Activate hub-only mode: build overlay theme and switch to it.
      */
     public function enableHideAction()
     {
@@ -152,29 +274,37 @@ class ServiceController extends ApiControllerBase
             return ['result' => 'failed', 'message' => 'POST required'];
         }
 
-        $model = new ServiceHub();
-        $model->hub->hubOnly = '1';
-        $model->serializeToConfig();
-
-        // If theme was previously set to 'servicehub', restore the real theme
         $cfg  = Config::getInstance();
         $conf = $cfg->object();
         $currentTheme = trim((string)($conf->system->theme ?? 'opnsense'));
-        if ($currentTheme === 'servicehub') {
-            $prevTheme = trim((string)$model->hub->previousTheme);
-            if ($prevTheme === '' || $prevTheme === 'servicehub') {
-                $prevTheme = 'opnsense';
-            }
-            $conf->system->theme = $prevTheme;
+
+        // Don't overwrite previousTheme if already on servicehub
+        $model = new ServiceHub();
+        if ($currentTheme !== 'servicehub') {
+            $model->hub->previousTheme = $currentTheme;
+        }
+        $model->hub->hubOnly = '1';
+        $model->serializeToConfig();
+
+        // Build overlay theme based on the user's real theme
+        $baseTheme = ($currentTheme !== 'servicehub') ? $currentTheme : trim((string)$model->hub->previousTheme);
+        if ($baseTheme === '' || $baseTheme === 'servicehub') {
+            $baseTheme = 'opnsense';
         }
 
+        if (!$this->buildOverlayTheme($baseTheme)) {
+            $cfg->save();
+            return ['result' => 'failed', 'message' => 'Base theme not found: ' . $baseTheme];
+        }
+
+        $conf->system->theme = 'servicehub';
         $cfg->save();
 
         return ['result' => 'saved'];
     }
 
     /**
-     * Deactivate hub-only mode, restoring full Services menu.
+     * Deactivate hub-only mode, restoring the user's original theme.
      */
     public function disableHideAction()
     {
@@ -182,24 +312,20 @@ class ServiceController extends ApiControllerBase
             return ['result' => 'failed', 'message' => 'POST required'];
         }
 
-        $model = new ServiceHub();
+        $model     = new ServiceHub();
+        $prevTheme = trim((string)$model->hub->previousTheme);
+        if ($prevTheme === '' || $prevTheme === 'servicehub') {
+            $prevTheme = 'opnsense';
+        }
+
         $model->hub->hubOnly = '0';
         $model->serializeToConfig();
 
-        // If theme was previously set to 'servicehub', restore the real theme
         $cfg  = Config::getInstance();
         $conf = $cfg->object();
-        $currentTheme = trim((string)($conf->system->theme ?? 'opnsense'));
-        if ($currentTheme === 'servicehub') {
-            $prevTheme = trim((string)$model->hub->previousTheme);
-            if ($prevTheme === '' || $prevTheme === 'servicehub') {
-                $prevTheme = 'opnsense';
-            }
-            $conf->system->theme = $prevTheme;
-        }
-
+        $conf->system->theme = $prevTheme;
         $cfg->save();
 
-        return ['result' => 'saved'];
+        return ['result' => 'saved', 'theme' => $prevTheme];
     }
 }

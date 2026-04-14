@@ -536,17 +536,23 @@ $(document).ready(function () {
                 setPersistedHubOnly(enable);
                 applyHubOnlyFallback(hub.hideEnabled);
                 renderHub();
-                // Brief feedback
-                $('#hubToolbar').prepend(
-                    $('<span class="text-success" style="margin-right:10px;font-size:13px;"></span>')
+                // Theme switch requires reload to fully take effect on all pages
+                $('#hubContent').prepend(
+                    $('<div class="alert alert-success" style="margin-bottom:12px;"></div>')
                         .append(
-                            $('<i class="fa fa-check"></i>'),
+                            $('<i class="fa fa-check" style="margin-right:6px;"></i>'),
                             document.createTextNode(
                                 enable
-                                ? ' Services menu collapsed'
-                                : ' Services menu restored'
-                            )
-                        ).delay(3000).fadeOut(400, function () { $(this).remove(); })
+                                ? 'Hub-only mode activated. '
+                                : 'Full Services menu restored. '
+                            ),
+                            $('<a href="#" style="font-weight:600;"></a>')
+                                .text('Reload now to apply on all pages.')
+                                .on('click', function (e) {
+                                    e.preventDefault();
+                                    window.location.reload();
+                                })
+                        )
                 );
             } else {
                 $btn.prop('disabled', false);
