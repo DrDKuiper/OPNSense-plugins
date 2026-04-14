@@ -1,7 +1,9 @@
-<?xml version="1.0"?>
-<ACL>
-    <Patterns>
-        <Pattern>ui/siemlite/*</Pattern>
-        <Pattern>api/siemlite/*</Pattern>
-    </Patterns>
-</ACL>
+<acl>
+    <page-services-siemlite>
+        <name>Services: SIEM Lite</name>
+        <patterns>
+            <pattern>ui/siemlite/*</pattern>
+            <pattern>api/siemlite/*</pattern>
+        </patterns>
+    </page-services-siemlite>
+</acl>
