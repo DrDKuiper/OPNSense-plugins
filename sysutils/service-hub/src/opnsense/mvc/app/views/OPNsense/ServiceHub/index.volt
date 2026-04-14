@@ -119,6 +119,15 @@ $(document).ready(function () {
         }
 
         var marked = 0;
+
+        // OPNsense 25.x style menu tree from diagnostics:
+        // #navigation > #mainmenu > #Services
+        var $servicesRoot = $nav.find('#mainmenu > #Services').first();
+        if ($servicesRoot.length) {
+            $servicesRoot.find('a[href]').not('[href*="servicehub"]').addClass(cls);
+            marked = $servicesRoot.find('a.' + cls).length;
+        }
+
         var containerSelector = [
             '#services',
             '[data-section="Services"]',
@@ -128,20 +137,22 @@ $(document).ready(function () {
             'div[id*="services"]'
         ].join(',');
 
-        $nav.find('a[href*="servicehub"]').each(function () {
-            var $container = $(this).closest(containerSelector);
-            if (!$container.length) {
-                return;
-            }
-
-            $container.find('a[href]').not('[href*="servicehub"]').each(function () {
-                var href = $(this).attr('href') || '';
-                if (href.indexOf('/ui/') === 0) {
-                    $(this).addClass(cls);
-                    marked++;
+        if (marked === 0) {
+            $nav.find('a[href*="servicehub"]').each(function () {
+                var $container = $(this).closest(containerSelector);
+                if (!$container.length) {
+                    return;
                 }
+
+                $container.find('a[href]').not('[href*="servicehub"]').each(function () {
+                    var href = $(this).attr('href') || '';
+                    if (href.indexOf('/ui/') === 0 || href.indexOf('.php') !== -1) {
+                        $(this).addClass(cls);
+                        marked++;
+                    }
+                });
             });
-        });
+        }
 
         // Last-resort fallback for unknown sidebar HTML variants.
         if (marked === 0) {
