@@ -94,6 +94,74 @@ $(document).ready(function () {
     }
 
     // ========================================================
+    // Hub-only fallback (sidebar hide without theme switch)
+    // ========================================================
+    function applyHubOnlyFallback(enable) {
+        var styleId = 'servicehub-hubonly-style';
+        var cls = 'hubonly-hidden-item';
+
+        if (!document.getElementById(styleId)) {
+            $('head').append(
+                $('<style id="' + styleId + '"></style>').text(
+                    '.' + cls + ' { display: none !important; }'
+                )
+            );
+        }
+
+        var $nav = $('#navigation');
+        if (!$nav.length) {
+            return;
+        }
+
+        $nav.find('a.' + cls).removeClass(cls);
+        if (!enable) {
+            return;
+        }
+
+        var marked = 0;
+        var containerSelector = [
+            '#services',
+            '[data-section="Services"]',
+            '[data-category="Services"]',
+            'li[id*="services"]',
+            'ul[id*="services"]',
+            'div[id*="services"]'
+        ].join(',');
+
+        $nav.find('a[href*="servicehub"]').each(function () {
+            var $container = $(this).closest(containerSelector);
+            if (!$container.length) {
+                return;
+            }
+
+            $container.find('a[href]').not('[href*="servicehub"]').each(function () {
+                var href = $(this).attr('href') || '';
+                if (href.indexOf('/ui/') === 0) {
+                    $(this).addClass(cls);
+                    marked++;
+                }
+            });
+        });
+
+        // Last-resort fallback for unknown sidebar HTML variants.
+        if (marked === 0) {
+            $nav.find('a.list-group-item[href^="/ui/"]')
+                .not('[href*="servicehub"]')
+                .not('[href*="/ui/dashboard"]')
+                .not('[href*="/ui/firewall"]')
+                .not('[href*="/ui/interfaces"]')
+                .not('[href*="/ui/diagnostics"]')
+                .not('[href*="/ui/routing"]')
+                .not('[href*="/ui/reporting"]')
+                .not('[href*="/ui/ids"]')
+                .not('[href*="/ui/trafficshaper"]')
+                .not('[href*="/ui/captiveportal"]')
+                .not('[href*="/ui/certs"]')
+                .addClass(cls);
+        }
+    }
+
+    // ========================================================
     // Hub view (card grid)
     // ========================================================
     function renderHub() {
@@ -413,6 +481,7 @@ $(document).ready(function () {
         ajaxCall(url, {}, function (resp) {
             if (resp && resp.result === 'saved') {
                 hub.hideEnabled = enable;
+                applyHubOnlyFallback(hub.hideEnabled);
                 renderHub();
                 // Theme switch requires a full page reload to take effect
                 $('#hubContent').prepend(
@@ -451,6 +520,7 @@ $(document).ready(function () {
             return;
         }
         hub.hideEnabled = !!(initData.hideStatus && initData.hideStatus.hideEnabled);
+        applyHubOnlyFallback(hub.hideEnabled);
         renderHub();
     }
 
