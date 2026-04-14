@@ -39,6 +39,10 @@ LOG_SOURCES = {
     'cron': '/var/log/cron/latest.log',
 }
 
+# Ensure log directory exists before configuring logging
+os.makedirs('/var/log/siemlite', exist_ok=True)
+os.makedirs('/var/db/siemlite', exist_ok=True)
+
 logging.basicConfig(
     filename='/var/log/siemlite/siemlite.log',
     level=logging.INFO,
