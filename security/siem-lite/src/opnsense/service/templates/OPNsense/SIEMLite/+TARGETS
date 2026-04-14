@@ -1,2 +1,2 @@
-+TARGET_DIR=/usr/local/etc/siemlite
-+OUTPUT_FILE=settings.json
+settings.json:/usr/local/etc/siemlite/settings.json
+siemlite.rc.conf.d:/etc/rc.conf.d/siemlite
