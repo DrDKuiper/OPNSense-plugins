@@ -13,6 +13,9 @@ $(document).ready(function () {
         hideEnabled: false   // true when servicehub theme overlay is active
     };
 
+    var HUB_ONLY_STORAGE_KEY = 'servicehub.hubOnly';
+    var hubOnlyObserver = null;
+
     // Keyword → default category mapping (matches against plugin + name + url + section)
     var AUTO_MAP = [
         ['VPN & Tunneling',   ['openvpn', 'strongswan', 'tinc', 'zerotier', 'openconnect',
@@ -93,6 +96,38 @@ $(document).ready(function () {
         return CAT_COLORS[cat] || '#95a5a6';
     }
 
+    function getPersistedHubOnly() {
+        try {
+            return window.localStorage.getItem(HUB_ONLY_STORAGE_KEY) === '1';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function setPersistedHubOnly(enable) {
+        try {
+            window.localStorage.setItem(HUB_ONLY_STORAGE_KEY, enable ? '1' : '0');
+        } catch (e) {}
+    }
+
+    function ensureHubOnlyObserver() {
+        if (hubOnlyObserver || !window.MutationObserver) {
+            return;
+        }
+
+        var nav = document.getElementById('navigation');
+        if (!nav) {
+            return;
+        }
+
+        hubOnlyObserver = new MutationObserver(function () {
+            if (hub.hideEnabled) {
+                applyHubOnlyFallback(true);
+            }
+        });
+        hubOnlyObserver.observe(nav, { childList: true, subtree: true });
+    }
+
     // ========================================================
     // Hub-only fallback (sidebar hide without theme switch)
     // ========================================================
@@ -113,7 +148,7 @@ $(document).ready(function () {
             return;
         }
 
-        $nav.find('a.' + cls).removeClass(cls);
+        $nav.find('a.' + cls + ', li.' + cls).removeClass(cls);
         if (!enable) {
             return;
         }
@@ -124,7 +159,10 @@ $(document).ready(function () {
         // #navigation > #mainmenu > #Services
         var $servicesRoot = $nav.find('#mainmenu > #Services').first();
         if ($servicesRoot.length) {
-            $servicesRoot.find('a[href]').not('[href*="servicehub"]').addClass(cls);
+            $servicesRoot.find('a[href]').not('[href*="servicehub"]').each(function () {
+                $(this).addClass(cls);
+                $(this).closest('li').addClass(cls);
+            });
             marked = $servicesRoot.find('a.' + cls).length;
         }
 
@@ -148,6 +186,7 @@ $(document).ready(function () {
                     var href = $(this).attr('href') || '';
                     if (href.indexOf('/ui/') === 0 || href.indexOf('.php') !== -1) {
                         $(this).addClass(cls);
+                        $(this).closest('li').addClass(cls);
                         marked++;
                     }
                 });
@@ -168,7 +207,10 @@ $(document).ready(function () {
                 .not('[href*="/ui/trafficshaper"]')
                 .not('[href*="/ui/captiveportal"]')
                 .not('[href*="/ui/certs"]')
-                .addClass(cls);
+                .each(function () {
+                    $(this).addClass(cls);
+                    $(this).closest('li').addClass(cls);
+                });
         }
     }
 
@@ -492,6 +534,7 @@ $(document).ready(function () {
         ajaxCall(url, {}, function (resp) {
             if (resp && resp.result === 'saved') {
                 hub.hideEnabled = enable;
+                setPersistedHubOnly(enable);
                 applyHubOnlyFallback(hub.hideEnabled);
                 renderHub();
                 // Theme switch requires a full page reload to take effect
@@ -530,7 +573,8 @@ $(document).ready(function () {
         if (initData.settings === null || initData.hideStatus === null || initData.items === null) {
             return;
         }
-        hub.hideEnabled = !!(initData.hideStatus && initData.hideStatus.hideEnabled);
+        hub.hideEnabled = !!(initData.hideStatus && initData.hideStatus.hideEnabled) || getPersistedHubOnly();
+        ensureHubOnlyObserver();
         applyHubOnlyFallback(hub.hideEnabled);
         renderHub();
     }
